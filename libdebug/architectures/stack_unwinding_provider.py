@@ -20,11 +20,17 @@ from libdebug.architectures.stack_unwinding_manager import StackUnwindingManager
 from libdebug.architectures.amd64.amd64_stack_unwinding import (
     Amd64StackUnwinding,
 )
+from libdebug.architectures.arm64.arm64_stack_unwinding import (
+    Arm64StackUnwinding,
+)
+import platform
 
-def stack_unwinding_provider(architecture: str = "amd64") -> StackUnwindingManager:
+def stack_unwinding_provider(architecture: str = platform.machine()) -> StackUnwindingManager:
     """Returns an instance of the stack unwinding provider to be used by the `Debugger` class."""
     match architecture:
-        case "amd64":
+        case "x86_64":
             return Amd64StackUnwinding()
+        case "aarch64":
+            return Arm64StackUnwinding()
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")

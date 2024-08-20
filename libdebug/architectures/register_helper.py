@@ -1,6 +1,6 @@
 #
 # This file is part of libdebug Python library (https://github.com/io-no/libdebug).
-# Copyright (c) 2023 Roberto Alessandro Bertolini.
+# Copyright (c) 2023 Roberto Alessandro Bertolini, Gioele Peltrera.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,17 +19,22 @@ from libdebug.architectures.register_holder import RegisterHolder
 from libdebug.architectures.amd64.amd64_ptrace_register_holder import (
     Amd64PtraceRegisterHolder,
 )
+from libdebug.architectures.arm64.arm64_ptrace_register_holder import (
+    Arm64PtraceRegisterHolder,
+)
 from typing import Callable
-
+import platform
 
 def register_holder_provider(
     register_file: bytes,
-    architecture: str = "amd64",
+    architecture: str = platform.machine(),
     ptrace_setter: Callable[[bytes], None] = None,
 ) -> RegisterHolder:
     """Returns an instance of the register holder to be used by the `Debugger` class."""
     match architecture:
-        case "amd64":
+        case "x86_64":
             return Amd64PtraceRegisterHolder(register_file, ptrace_setter)
+        case "aarch64":
+            return Arm64PtraceRegisterHolder(register_file, ptrace_setter)
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")
