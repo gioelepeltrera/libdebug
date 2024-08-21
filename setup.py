@@ -2,7 +2,9 @@ from setuptools import setup, find_packages
 import os
 
 # Check if the user has the required C libraries installed
-if not os.path.isfile("/usr/include/sys/ptrace.h"):
+if (not os.path.isfile("/usr/include/sys/ptrace.h")
+    ) or (
+   not os.path.isfile("/etc/sysctl.d/10-ptrace.conf")):
     print("Required C libraries not found. Please install ptrace")
     exit(1)
 if not os.path.isfile("/usr/include/libelf.h"):
