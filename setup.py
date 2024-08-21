@@ -4,11 +4,11 @@ import os
 # Check if the user has the required C libraries installed
 if (not os.path.isfile("/usr/include/sys/ptrace.h")
     ) and (
-   not os.path.isfile("/etc/sysctl.d/10-ptrace.conf")):
+   not os.path.isfile("/usr/include/linux/ptrace.h")):
     print("Required C libraries not found. Please install ptrace")
     exit(1)
 if not os.path.isfile("/usr/include/libelf.h"):
-    print("Required C libraries not found. Please install elfutils")
+    print("Required C libraries not found. Please install elfutils or libelf-dev")
     exit(1)
 if os.path.isfile("/usr/include/libdwarf/dwarf.h") and os.path.isfile("/usr/include/libdwarf/libdwarf.h"):
     debug_sym_cffi = 'debug_sym_cffi_build_legacy'
