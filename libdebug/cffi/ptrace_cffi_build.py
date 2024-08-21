@@ -44,7 +44,14 @@ ffibuilder.cdef(
 ffibuilder.set_source(
     "libdebug.cffi._ptrace_cffi",
     """
+#ifdef __aarch64__
+#define PTRACE_GETREGS PTRACE_GETREGSET
+#define PTRACE_SETREGS PTRACE_SETREGSET
+#include <linux/ptrace.h>
+#else
 #include <sys/ptrace.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdint.h>
