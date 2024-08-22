@@ -35,7 +35,7 @@ class Breakpoint:
     symbol: bytes = b""
     hit_count: int = 0
     hardware: bool = False
-    #_callback: None | Callable[["Debugger", "Breakpoint"], None] = None
-    _callback: Optional[Callable[["Debugger", "Breakpoint"], None]] = None
+    _callback: None | Callable[["Debugger", "Breakpoint"], None] = None
+    #_callback: Optional[Callable[["Debugger", "Breakpoint"], None]] = None
     condition: str = "X"
     length: int = 1
