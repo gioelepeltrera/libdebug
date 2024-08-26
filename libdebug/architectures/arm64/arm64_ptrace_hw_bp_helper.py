@@ -24,11 +24,11 @@ from libdebug.liblog import liblog
 
 # Define the offsets and control bits for ARM debug registers
 ARM_DBGREGS_OFF = {
-    "BVR0": 0x0880,  # Breakpoint Value Register
-    "BVR1": 0x0884,
-    "BVR2": 0x0888,
-    "BVR3": 0x088C,
-    # Add more if ARM supports more registers
+    "BVR0": 0x100,  # Breakpoint Value Register 0
+    "BVR1": 0x104,  # Breakpoint Value Register 1
+    "BVR2": 0x108,  # Breakpoint Value Register 2
+    "BVR3": 0x10C,  # Breakpoint Value Register 3
+    # Add more if needed
 }
 
 ARM_DBGREGS_CTRL_LOCAL = {"BVR0": 0x1, "BVR1": 0x2, "BVR2": 0x4, "BVR3": 0x8}
