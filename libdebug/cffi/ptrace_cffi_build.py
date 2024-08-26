@@ -47,6 +47,8 @@ ffibuilder.set_source(
 #ifdef __aarch64__
 #define PTRACE_GETREGS PTRACE_GETREGSET
 #define PTRACE_SETREGS PTRACE_SETREGSET
+#define PTRACE_POKEUSER PTRACE_POKEUSR
+#define PTRACE_PEEKUSER PTRACE_PEEKUSR
 #include <linux/ptrace.h>
 #else
 #include <sys/ptrace.h>
