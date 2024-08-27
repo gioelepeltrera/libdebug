@@ -45,11 +45,10 @@ ffibuilder.set_source(
     "libdebug.cffi._ptrace_cffi",
     """
 #ifdef __aarch64__
-#define PTRACE_GETREGS PTRACE_GETREGSET
-#define PTRACE_SETREGS PTRACE_SETREGSET
 #define PTRACE_POKEUSER PTRACE_POKEUSR
 #define PTRACE_PEEKUSER PTRACE_PEEKUSR
 #include <linux/ptrace.h>
+#include <linux/uio.h>
 #else
 #include <sys/ptrace.h>
 #endif
@@ -80,7 +79,33 @@ void ptrace_set_options(int pid)
     ptrace(PTRACE_SETOPTIONS, pid, NULL, options);
 }
 
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
+#ifdef __aarch64__
+int ptrace_getregs(int pid, void *regs)
+{
+    printf("ptrace_getregs AARCH64\n");
+
+    struct iovec iov = { regs, sizeof(struct user_hwdebug_state) };
+    printf("ptrace_getregs AARCH64 2\n");
+    printf("IOV BASE: %p\n", iov.iov_base);
+    printf("IOV LEN: %d\n", iov.iov_len);
+    printf("IOV content: %p\n", ((struct user_hwdebug_state *)iov.iov_base)->dbg_info[0].address);
+    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
+}
+
+int ptrace_setregs(int pid, void *regs)
+{
+    printf("ptrace_setregs AARCH64\n");
+    struct iovec iov = { regs, sizeof(struct user_hwdebug_state) };
+    printf("ptrace_setregs AARCH64 2\n");
+    printf("IOV BASE: %p\n", iov.iov_base);
+    printf("IOV LEN: %d\n", iov.iov_len);
+    printf("IOV content: %p\n", ((struct user_hwdebug_state *)iov.iov_base)->dbg_info[0].address);
+    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov);
+}
+#else
 int ptrace_getregs(int pid, void *regs)
 {
     return ptrace(PTRACE_GETREGS, pid, NULL, regs);
@@ -90,6 +115,21 @@ int ptrace_setregs(int pid, void *regs)
 {
     return ptrace(PTRACE_SETREGS, pid, NULL, regs);
 }
+#endif
+
+
+
+//int ptrace_getregs(int pid, void *regs)
+//{
+//    return ptrace(PTRACE_GETREGS, pid, NULL, regs);
+//}
+//
+//int ptrace_setregs(int pid, void *regs)
+//{
+//    return ptrace(PTRACE_SETREGS, pid, NULL, regs);
+//}
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
 int ptrace_cont(int pid)
 {
@@ -103,21 +143,34 @@ int ptrace_singlestep(int pid)
 
 uint64_t ptrace_peekdata(int pid, uint64_t addr)
 {
+    printf("ptrace_peekdata\n");
+    printf("PID: %d\n", pid);
+    printf("ADDR: %p\n", (void*) addr);
+
     return ptrace(PTRACE_PEEKDATA, pid, (void*) addr, NULL);
 }
 
 uint64_t ptrace_pokedata(int pid, uint64_t addr, uint64_t data)
 {
+    printf("ptrace_pokedata\n");
+    printf("PID: %d\n", pid);
+    printf("ADDR: %p\n", (void*) addr);
     return ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
 }
 
 uint64_t ptrace_peekuser(int pid, uint64_t addr)
 {
+    printf("ptrace_peekuser\n");
+    printf("PID: %d\n", pid);
+    printf("ADDR: %p\n", (void*) addr);
     return ptrace(PTRACE_PEEKUSER, pid, addr, NULL);
 }
 
 uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data)
 {
+    printf("ptrace_pokeuser\n");
+    printf("PID: %d\n", pid);
+    printf("ADDR: %p\n", (void*) addr);
     return ptrace(PTRACE_POKEUSER, pid, addr, data);
 }
 
