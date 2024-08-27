@@ -24,6 +24,7 @@ else:
     print("Required C libraries not found. Please install libdwarf-dev or libdwarf-devel")
     exit(1)
 
+print(f"-------------Using {debug_sym_cffi} for libdwarf--------------")
 setup(
     name="libdebug",
     version="0.3",
