@@ -12,12 +12,14 @@ if not os.path.isfile("/usr/include/libelf.h"):
     exit(1)
 if os.path.isfile("/usr/include/libdwarf/dwarf.h") and os.path.isfile("/usr/include/libdwarf/libdwarf.h"):
     debug_sym_cffi = 'debug_sym_cffi_build_legacy'
+    print("Using legacy libdwarf")
 elif (os.path.isfile("/usr/include/libdwarf/libdwarf-0/dwarf.h") and 
       os.path.isfile("/usr/include/libdwarf/libdwarf-0/libdwarf.h")
       ) or (
       os.path.isfile("/usr/include/libdwarf-0/dwarf.h") and 
       os.path.isfile("/usr/include/libdwarf-0/libdwarf.h")):
     debug_sym_cffi = 'debug_sym_cffi_build'
+    print("Using libdwarf-0")
 else:
     print("Required C libraries not found. Please install libdwarf-dev or libdwarf-devel")
     exit(1)
