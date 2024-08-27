@@ -56,6 +56,7 @@ ffibuilder.set_source(
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdint.h>
+#include <stdio.h>
 
 
 int ptrace_trace_me(void)
