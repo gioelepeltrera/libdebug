@@ -91,8 +91,7 @@ int ptrace_getregs(int pid, void *regs)
     struct iovec iov = { regs, sizeof(struct user_hwdebug_state) };
     printf("ptrace_getregs AARCH64 2                         --                  ");
     printf("IOV BASE: %p                         --                  ", iov.iov_base);
-    printf("IOV LEN: %d                         --                  ", iov.iov_len);
-    printf("IOV content: %p                         --                  ", ((struct user_hwdebug_state *)iov.iov_base)->dbg_info[0].address);
+    printf("IOV LEN: %ld                         --                  ", iov.iov_len);
     return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
 }
 
@@ -102,8 +101,7 @@ int ptrace_setregs(int pid, void *regs)
     struct iovec iov = { regs, sizeof(struct user_hwdebug_state) };
     printf("ptrace_setregs AARCH64 2                         --                  ");
     printf("IOV BASE: %p                         --                  ", iov.iov_base);
-    printf("IOV LEN: %d                         --                  ", iov.iov_len);
-    printf("IOV content: %p                         --                  ", ((struct user_hwdebug_state *)iov.iov_base)->dbg_info[0].address);
+    printf("IOV LEN: %ld                         --                  ", iov.iov_len);
     return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov);
 }
 #else
