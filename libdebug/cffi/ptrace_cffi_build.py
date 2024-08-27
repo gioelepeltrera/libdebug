@@ -49,10 +49,11 @@ ffibuilder.set_source(
 #define PTRACE_SETREGS PTRACE_SETREGSET
 #define PTRACE_POKEUSER PTRACE_POKEUSR
 #define PTRACE_PEEKUSER PTRACE_PEEKUSR
-#include <linux/ptrace.h>
-#else
-#include <sys/ptrace.h>
+
+#include <asm/ptrace.h> // For the aarch64 register structure
+#include <elf.h> // Include the ELF header
 #endif
+#include <sys/ptrace.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -81,6 +82,24 @@ void ptrace_set_options(int pid)
 }
 
 
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+#ifdef __aarch64__
+
+
+int ptrace_getregs(int pid, void *regs)
+{
+    struct iovec iov = { regs, sizeof(struct user_pt_regs) }; // Assuming `struct user_pt_regs`
+    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
+}
+
+int ptrace_setregs(int pid, void *regs)
+{
+    struct iovec iov = { regs, sizeof(struct user_pt_regs) }; // Assuming `struct user_pt_regs`
+    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov);
+}
+#else
 int ptrace_getregs(int pid, void *regs)
 {
     return ptrace(PTRACE_GETREGS, pid, NULL, regs);
@@ -90,6 +109,11 @@ int ptrace_setregs(int pid, void *regs)
 {
     return ptrace(PTRACE_SETREGS, pid, NULL, regs);
 }
+#endif
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
 
 int ptrace_cont(int pid)
 {
