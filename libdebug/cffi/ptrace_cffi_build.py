@@ -45,10 +45,7 @@ ffibuilder.set_source(
     "libdebug.cffi._ptrace_cffi",
     """
 #ifdef __aarch64__
-#define PTRACE_GETREGS PTRACE_GETREGSET
-#define PTRACE_SETREGS PTRACE_SETREGSET
-#define PTRACE_POKEUSER PTRACE_POKEUSR
-#define PTRACE_PEEKUSER PTRACE_PEEKUSR
+
 #include <sys/uio.h>
 #include <asm/ptrace.h> // For the aarch64 register structure
 #include <elf.h> // Include the ELF header
