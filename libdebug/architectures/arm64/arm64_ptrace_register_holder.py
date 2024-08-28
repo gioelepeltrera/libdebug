@@ -126,6 +126,9 @@ class Arm64PtraceRegisterHolder(PtraceRegisterHolder):
         # Setup accessor for special registers
         for name in ARM64_SPECIAL_REGS:
             setattr(target_class, name, get_property_64(name))
+        
+        # Provide `rip` compatibility for AArch64 by mapping it to `pc`s
+        setattr(target_class, "rip", get_property_64("pc"))
 
     def flush(self, source):
         """Flushes the register values to the target process."""
