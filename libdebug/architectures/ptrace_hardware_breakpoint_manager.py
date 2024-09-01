@@ -29,9 +29,10 @@ class PtraceHardwareBreakpointManager:
     """
 
     def __init__(
-        self, peek_mem: Callable[[int], int], poke_mem: Callable[[int, int], None],
-        getregset: Callable[[int, "ctype", int], int],
-        setregset: Callable[[int, "ctype", int], int],
+        self, peek_mem: Callable[[int], int] = None, 
+        poke_mem: Callable[[int, int], None] = None,
+        getregset: Callable[[int, "ctype", int], int] = None,
+        setregset: Callable[[int, "ctype", int], int] = None,
     ):
         self.peek_mem = peek_mem
         self.poke_mem = poke_mem
