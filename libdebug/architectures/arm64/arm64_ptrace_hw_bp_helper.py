@@ -74,7 +74,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         print("____BP _DEBUG_Before setting the register___")
 
         for i in range(ARM_DBREGS_COUNT):
-            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
             if free <1 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
                 free = i
         
@@ -93,7 +93,8 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
         print("____BP _DEBUG_After setting the register___")
         for i in range(ARM_DBREGS_COUNT):
-            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+            #convert all the addresses to string
+            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
 
     
       
@@ -134,7 +135,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
         print("____BP _DEBUG_After setting the register___")
         for i in range(ARM_DBREGS_COUNT):
-            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
 
     
         # Remove the breakpoint
