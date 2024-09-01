@@ -40,6 +40,9 @@ import os
 import signal
 import pty
 import tty
+import platform
+
+NT_PRSTATUS = 1 
 
 
 class PtraceInterface(DebuggingInterface):
@@ -170,8 +173,8 @@ class PtraceInterface(DebuggingInterface):
         liblog.debugger("Options set")
         invalidate_process_cache()
         self.hardware_bp_helper = ptrace_hardware_breakpoint_manager_provider(
-            self._peek_user, self._poke_user
-        )
+            self._peek_user, self._poke_user, self._getregset, self._setregset
+        )#TODO add here the methods for the add bphw for aaarch64 without pid
 
     def attach(self, process_id: int):
         """Attaches to the specified process.
@@ -223,22 +226,48 @@ class PtraceInterface(DebuggingInterface):
         # TODO: this 512 is a magic number, it should be replaced with a constant
         register_file = self.ffi.new("char[512]")
         liblog.debugger("Getting registers from process %d", self.process_id)
-        result = self.lib_trace.ptrace_getregs(self.process_id, register_file)
-        if result == -1:
-            errno_val = self.ffi.errno
-            raise OSError(errno_val, errno.errorcode[errno_val])
+        #TODO AARCH64   getsetregs
+        
+        architecure = platform.machine()
+        if architecure == "x86_64":
+            result = self.lib_trace.ptrace_getregs(self.process_id, register_file)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+            else:
+                buffer = self.ffi.unpack(register_file, 512)
+                return register_holder_provider(buffer, ptrace_setter=self._set_registers)
+        elif architecure == "aarch64":
+            SIZE = 0x110
+            result = self.lib_trace.ptrace_getregset(self.process_id, NT_PRSTATUS, register_file, SIZE)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+            else:
+                buffer = self.ffi.unpack(register_file, 512)
+                return register_holder_provider(buffer, ptrace_setter=self._set_registers)
         else:
-            buffer = self.ffi.unpack(register_file, 512)
-            return register_holder_provider(buffer, ptrace_setter=self._set_registers)
+            raise NotImplementedError(f"Architecture {architecure} not supported")
+        
 
     def _set_registers(self, buffer):
         """Sets the value of all the available registers."""
         # TODO: this 512 is a magic number, it should be replaced with a constant
         register_file = self.ffi.new("char[512]", buffer)
-        result = self.lib_trace.ptrace_setregs(self.process_id, register_file)
-        if result == -1:
-            errno_val = self.ffi.errno
-            raise OSError(errno_val, errno.errorcode[errno_val])
+        architecure = platform.machine()
+        if architecure == "x86_64":
+            result = self.lib_trace.ptrace_setregs(self.process_id, register_file)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+        elif architecure == "aarch64":
+            SIZE = 0x110
+            result = self.lib_trace.ptrace_setregset(self.process_id, NT_PRSTATUS, register_file, SIZE)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+        else:
+            raise NotImplementedError(f"Architecture {architecure} not supported")
 
     def wait_for_child(self):
         """Waits for the child process to be ready for commands.
@@ -422,7 +451,29 @@ class PtraceInterface(DebuggingInterface):
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])
+#TODO add here the methods for the add bphw for aaarch64 that adds the pid and do the thing
+# getregesetrs and setregset
+    def _getregset(self, type: int, regset: "ctype", size: int):
+        """Gets the registers from the process."""
+        assert self.process_id is not None
+        result = self.lib_trace.ptrace_getregset(self.process_id, type, regset, size)
+        liblog.debugger("GETREGSET returned with result %d", result)
 
+        error = self.ffi.errno
+        if error == errno.EIO:
+            raise OSError(error, errno.errorcode[error])
+    
+    def _setregset(self, type: int, regset: "ctype", size: int):
+        """Sets the registers in the process."""
+        assert self.process_id is not None
+
+        result = self.lib_trace.ptrace_setregset(self.process_id, type, regset, size)
+        liblog.debugger("SETREGSET returned with result %d", result)
+
+        error = self.ffi.errno
+        if error == errno.EIO:
+            raise OSError(error, errno.errorcode[error])
+        
     def fds(self):
         """Returns the file descriptors of the process."""
         assert self.process_id is not None

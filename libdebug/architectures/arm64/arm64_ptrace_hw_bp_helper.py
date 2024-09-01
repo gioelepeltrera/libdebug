@@ -20,7 +20,7 @@ from libdebug.architectures.ptrace_hardware_breakpoint_manager import (
 )
 from libdebug.data.breakpoint import Breakpoint
 from libdebug.liblog import liblog
-
+from libdebug.cffi import _ptrace_cffi
 
 # Define the offsets and control bits for ARM debug registers
 ARM_DBGREGS_OFF = {
@@ -37,26 +37,29 @@ ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}  # ARM conditions
 ARM_DBGREGS_CTRL_LEN = {"BVR0": 0x2, "BVR1": 0x4, "BVR2": 0x8, "BVR3": 0x10}
 ARM_DBGREGS_CTRL_LEN_VAL = {1: 0, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
 
-ARM_DBREGS_COUNT = 4  # Adjust according to the specific ARM implementation
+ARM_DBREGS_COUNT = 6  # Adjust according to the specific ARM implementation
 
+NT_ARM_HW_BREAK = 0x402
 
 class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
     """A hardware breakpoint manager for the ARM architecture.
 
     Attributes:
-        peek_mem (callable): A function that reads a number of bytes from the target process memory.
-        poke_mem (callable): A function that writes a number of bytes to the target process memory.
+        getregset (callable): A function that reads a register set from the target process.
+        setregset (callable): A function that writes a register set to the target process.
         breakpoint_count (int): The number of hardware breakpoints set.
     """
 
 
-    def __init__(self, peek_mem, poke_mem):
-        super().__init__(peek_mem, poke_mem)
+    def __init__(self, getregset, setregset):
+        super().__init__(getregset, setregset)
         self.breakpoint_registers = {
-            "BVR0": None,
-            "BVR1": None,
-            "BVR2": None,
-            "BVR3": None,
+            "HWBPREG_0": None,
+            "HWBPREG_1": None,
+            "HWBPREG_2": None,
+            "HWBPREG_3": None,
+            "HWBPREG_4": None,
+            "HWBPREG_5": None,
         }
 
     def install_breakpoint(self, bp: Breakpoint):
@@ -64,45 +67,43 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         if self.breakpoint_count >= ARM_DBREGS_COUNT:
             raise RuntimeError("No more hardware breakpoints available.")
 
-        # Find the first available breakpoint register
-        register = next(
-            reg for reg, bp in self.breakpoint_registers.items() if bp is None
-        )
-        liblog.debugger(f"Installing hardware breakpoint on register {register}.")
+        hw_dbg_state = _ptrace_cffi.new("struct user_hwdebug_state")
+        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+        if res < 0:
+            raise RuntimeError("Failed to read the hardware debug state.")
+        free = -1 
+        print("____BP _DEBUG_Before setting the register___")
+
+        for i in range(ARM_DBREGS_COUNT):
+            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+            if free <1 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
+                free = i
+        
+        if free < 0:
+            raise RuntimeError("No more hardware breakpoints available.")
+        else:
+            liblog.debugger(f"Trying to install hardware breakpoint on register {free}.")
 
         # Write the breakpoint address in the register
-        self.poke_mem(ARM_DBGREGS_OFF[register], bp.address)
+        hw_dbg_state.dbg_regs[free].addr = bp.address
+        hw_dbg_state.dbg_regs[free].ctrl = 0x25#TODO set better
 
-        # Set the breakpoint control register
-        ctrl = (
-            ARM_DBGREGS_CTRL_LOCAL[register]
-            | (
-                ARM_DBGREGS_CTRL_COND_VAL[bp.condition]
-                << ARM_DBGREGS_CTRL_COND[register]
-            )
-            | (
-                ARM_DBGREGS_CTRL_LEN_VAL[bp.length]
-                << ARM_DBGREGS_CTRL_LEN[register]
-            )
-        )
+        res = self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+        if res < 0:
+            raise RuntimeError("Failed to write the hardware debug state.")
+        else:
+            #print all the registers
+            res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+            print("____BP _DEBUG_After setting the register___")
+            for i in range(ARM_DBREGS_COUNT):
+                print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
 
-        # Read the current value of the DBGDSCR register (ARM Debug Status and Control Register)
-        current_ctrl = self.peek_mem(ARM_DBGREGS_OFF["DBGDSCR"])
-
-        # Clear condition and length fields for the current register
-        current_ctrl &= ~(0x3 << ARM_DBGREGS_CTRL_COND[register])
-        current_ctrl &= ~(0x3 << ARM_DBGREGS_CTRL_LEN[register])
-
-        # Set the new value of the register
-        current_ctrl |= ctrl
-
-        # Write the new value of the DBGDSCR register
-        self.poke_mem(ARM_DBGREGS_OFF["DBGDSCR"], current_ctrl)
-
+    
+      
         # Save the breakpoint
-        self.breakpoint_registers[register] = bp
+        self.breakpoint_registers[free] = bp
 
-        liblog.debugger(f"Hardware breakpoint installed on register {register}.")
+        liblog.debugger(f"Hardware breakpoint installed on register {free}.")
 
         self.breakpoint_count += 1
 
@@ -111,32 +112,41 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         if self.breakpoint_count <= 0:
             raise RuntimeError("No more hardware breakpoints to remove.")
 
-        # Find the breakpoint register
-        register = next(
-            reg for reg, bp_ in self.breakpoint_registers.items() if bp_ == bp
-        )
+        hw_dbg_state = _ptrace_cffi.new("struct user_hwdebug_state")
+        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+        if res < 0:
+            raise RuntimeError("Failed to read the hardware debug state.")
+        free = -1 
+        print("____BP _DEBUG_Before nullifying the register___")
 
-        if register is None:
-            raise RuntimeError("Hardware breakpoint not found.")
+        for i in range(ARM_DBREGS_COUNT):
+            if hw_dbg_state.dbg_regs[i].addr == bp.address:
+                free = i
+        
+        if free < 0:
+            raise RuntimeError("No hardware breakpoint to remove.")
+        else:
+            liblog.debugger(f"Trying to remove hardware breakpoint on register {free}.")
 
-        liblog.debugger(f"Removing hardware breakpoint on register {register}.")
+        # Write the breakpoint address in the register
+        hw_dbg_state.dbg_regs[free].addr = 0
+        hw_dbg_state.dbg_regs[free].ctrl = 0
 
-        # Clear the breakpoint address in the register
-        self.poke_mem(ARM_DBGREGS_OFF[register], 0)
+        res = self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+        if res < 0:
+            raise RuntimeError("Failed to write the hardware debug state.")
+        else:
+            #print all the registers
+            res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, _ptrace_cffi.sizeof(hw_dbg_state))
+            print("____BP _DEBUG_After setting the register___")
+            for i in range(ARM_DBREGS_COUNT):
+                print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
 
-        # Read the current value of the control register
-        current_ctrl = self.peek_mem(ARM_DBGREGS_OFF["DBGDSCR"])
-
-        # Clear the breakpoint control register
-        current_ctrl &= ~ARM_DBGREGS_CTRL_LOCAL[register]
-
-        # Write the new value of the DBGDSCR register
-        self.poke_mem(ARM_DBGREGS_OFF["DBGDSCR"], current_ctrl)
-
+    
         # Remove the breakpoint
-        self.breakpoint_registers[register] = None
+        self.breakpoint_registers[free] = None
 
-        liblog.debugger(f"Hardware breakpoint removed from register {register}.")
+        liblog.debugger(f"Hardware breakpoint removed from register {free}.")
 
         self.breakpoint_count -= 1
 

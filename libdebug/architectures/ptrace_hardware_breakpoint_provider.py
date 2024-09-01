@@ -30,6 +30,9 @@ import platform
 def ptrace_hardware_breakpoint_manager_provider(
     peek_mem: Callable[[int], int] = None,
     poke_mem: Callable[[int, int], None] = None,
+#    def _getregset(self, type: int, regset: "ctype", size: int):
+    getregset: Callable[[int, "ctype", int], int] = None,
+    setregset: Callable[[int, "ctype", int], int] = None,
     architecture: str = platform.machine(),
 ) -> PtraceHardwareBreakpointManager:
     """Returns an instance of the hardware breakpoint manager to be used by the `Debugger` class."""
@@ -39,6 +42,6 @@ def ptrace_hardware_breakpoint_manager_provider(
         case "x86_64":
             return Amd64PtraceHardwareBreakpointManager(peek_mem, poke_mem)
         case "aarch64":
-            return Arm64PtraceHardwareBreakpointManager(peek_mem, poke_mem)
+            return Arm64PtraceHardwareBreakpointManager(getregset, setregset)
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")

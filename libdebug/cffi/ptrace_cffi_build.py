@@ -25,8 +25,12 @@ ffibuilder.cdef(
     int ptrace_detach(int pid);
     void ptrace_set_options(int pid);
 
+
     int ptrace_getregs(int pid, void *regs);
     int ptrace_setregs(int pid, void *regs);
+    
+    int ptrace_getregset(int pid, int type, void *regs, int size);
+    int ptrace_setregset(int pid, int type, void *regs, int size);
 
     int ptrace_cont(int pid);
     int ptrace_singlestep(int pid);
@@ -37,7 +41,22 @@ ffibuilder.cdef(
     uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data);
 
 
+
     int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data);
+"""
+)
+
+ffibuilder.cdef(
+    """
+    struct user_hwdebug_state {
+        unsigned int dbg_info;
+        unsigned int pad;
+        struct {
+            unsigned long addr;
+            unsigned int ctrl;
+            unsigned int pad;
+        } dbg_regs[6];
+    };
 """
 )
 
@@ -82,20 +101,31 @@ void ptrace_set_options(int pid)
 
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
-#ifdef __aarch64__
 
+
+int ptrace_getregset(int pid, int type,  void *regs, int size)
+{
+    struct iovec iov = { regs, size};
+    return ptrace(PTRACE_GETREGSET, pid, type, &iov);
+}
+
+int ptrace_setregset(int pid, int type, void *regs, int size)
+{
+    struct iovec iov = { regs, size };
+    return ptrace(PTRACE_SETREGSET, pid, type, &iov);
+}
+#ifdef __aarch64__
 
 int ptrace_getregs(int pid, void *regs)
 {
-    struct iovec iov = { regs, sizeof(struct user_pt_regs) }; // Assuming `struct user_pt_regs`
-    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
+    return -1;
 }
 
 int ptrace_setregs(int pid, void *regs)
 {
-    struct iovec iov = { regs, sizeof(struct user_pt_regs) }; // Assuming `struct user_pt_regs`
-    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov);
+    return-1;
 }
+
 #else
 int ptrace_getregs(int pid, void *regs)
 {
