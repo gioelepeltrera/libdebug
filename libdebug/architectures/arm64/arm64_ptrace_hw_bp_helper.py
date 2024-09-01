@@ -68,9 +68,8 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             raise RuntimeError("No more hardware breakpoints available.")
 
         hw_dbg_state = ffi.new("struct user_hwdebug_state *")
-        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        if res < 0:
-            raise RuntimeError("Failed to read the hardware debug state.")
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        
         free = -1 
         print("____BP _DEBUG_Before setting the register___")
 
@@ -88,15 +87,13 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         hw_dbg_state.dbg_regs[free].addr = bp.address
         hw_dbg_state.dbg_regs[free].ctrl = 0x25#TODO set better
 
-        res = self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        if res < 0:
-            raise RuntimeError("Failed to write the hardware debug state.")
-        else:
-            #print all the registers
-            res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-            print("____BP _DEBUG_After setting the register___")
-            for i in range(ARM_DBREGS_COUNT):
-                print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+
+        #print all the registers
+        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        print("____BP _DEBUG_After setting the register___")
+        for i in range(ARM_DBREGS_COUNT):
+            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
 
     
       
@@ -113,9 +110,8 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             raise RuntimeError("No more hardware breakpoints to remove.")
 
         hw_dbg_state = ffi.new("struct user_hwdebug_state *")
-        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        if res < 0:
-            raise RuntimeError("Failed to read the hardware debug state.")
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        
         free = -1 
         print("____BP _DEBUG_Before nullifying the register___")
 
@@ -132,15 +128,13 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         hw_dbg_state.dbg_regs[free].addr = 0
         hw_dbg_state.dbg_regs[free].ctrl = 0
 
-        res = self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        if res < 0:
-            raise RuntimeError("Failed to write the hardware debug state.")
-        else:
-            #print all the registers
-            res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-            print("____BP _DEBUG_After setting the register___")
-            for i in range(ARM_DBREGS_COUNT):
-                print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
+        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+    
+        #print all the registers
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        print("____BP _DEBUG_After setting the register___")
+        for i in range(ARM_DBREGS_COUNT):
+            print(str(i)+" -- "+hw_dbg_state.dbg_regs[i].addr+"  -- ctrl: "+hw_dbg_state.dbg_regs[i].ctrl)
 
     
         # Remove the breakpoint
