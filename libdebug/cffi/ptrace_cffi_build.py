@@ -55,7 +55,7 @@ ffibuilder.cdef(
             unsigned long addr;
             unsigned int ctrl;
             unsigned int pad;
-        } dbg_regs[6];
+        } dbg_regs[...];
     };
 """
 )
