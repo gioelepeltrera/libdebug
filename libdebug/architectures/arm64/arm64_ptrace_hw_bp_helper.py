@@ -67,7 +67,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         if self.breakpoint_count >= ARM_DBREGS_COUNT:
             raise RuntimeError("No more hardware breakpoints available.")
 
-        hw_dbg_state = ffi.new("struct user_hwdebug_state")
+        hw_dbg_state = ffi.new("struct user_hwdebug_state *")
         res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, ffi.sizeof(hw_dbg_state))
         if res < 0:
             raise RuntimeError("Failed to read the hardware debug state.")
@@ -112,7 +112,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         if self.breakpoint_count <= 0:
             raise RuntimeError("No more hardware breakpoints to remove.")
 
-        hw_dbg_state = ffi.new("struct user_hwdebug_state")
+        hw_dbg_state = ffi.new("struct user_hwdebug_state *")
         res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, ffi.sizeof(hw_dbg_state))
         if res < 0:
             raise RuntimeError("Failed to read the hardware debug state.")
