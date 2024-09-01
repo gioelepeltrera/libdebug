@@ -52,7 +52,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
 
 
     def __init__(self, getregset, setregset):
-        super().__init__(getregset, setregset)
+        super().__init__(getregset=getregset, setregset=setregset)
         self.breakpoint_registers = {
             "HWBPREG_0": None,
             "HWBPREG_1": None,
