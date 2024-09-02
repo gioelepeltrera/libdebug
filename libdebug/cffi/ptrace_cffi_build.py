@@ -104,26 +104,30 @@ void ptrace_set_options(int pid)
 
 
 int ptrace_getregset(int pid, int type,  void *regs, int size)
-{
+{    
+    printf("GETREGSET_CFFI______%d___%d_______",pid, type);
     struct iovec iov = { regs, size};
     return ptrace(PTRACE_GETREGSET, pid, type, &iov);
 }
 
 int ptrace_setregset(int pid, int type, void *regs, int size)
 {
-    printf("SETREGSET_CFFI_____________");
+    printf("SETREGSET_CFFI______%d___%d_______",pid, type);
     struct iovec iov = { regs, size };
     return ptrace(PTRACE_SETREGSET, pid, type, &iov);
 }
 #ifdef __aarch64__
 
 int ptrace_getregs(int pid, void *regs)
-{
+{    
+    printf("GETREGS_CFFI____________");
+
     return -1;
 }
 
 int ptrace_setregs(int pid, void *regs)
-{
+{    
+    printf("SETREGS_CFFI_________");
     return-1;
 }
 
