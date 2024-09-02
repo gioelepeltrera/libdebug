@@ -129,7 +129,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
     
         #print all the registers
-        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
+        #self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         #print("____BP _DEBUG_After setting the register___")
         #for i in range(ARM_DBREGS_COUNT):
         #    print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))

@@ -144,16 +144,12 @@ class Debugger:
 
     def kill(self):
         """Kills the process."""
-        #TODO remove prints
-        print("Start Killing Process")
         if self.polling_thread:
             self.polling_thread.join()
-        print("Killing Interface")
         self.interface.shutdown()
         self.polling_thread.join()
         self.instanced = False
         self.memory = None
-        print("END Killing Process")
 
     def _flush_and_cont_after_bp(self, breakpoint: Breakpoint):
         """Flushes the registers, resumes the execution of the process, and re-sets the breakpoint at the specified address."""
