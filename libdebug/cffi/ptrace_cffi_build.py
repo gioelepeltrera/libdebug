@@ -175,13 +175,14 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     }
     if (i == ARM_DBREGS_COUNT) {
         perror("Breakpoint not found");
+        printf("Breakpoint not found");
     }
     // Remove the breakpoint
     hwdebug.dbg_regs[i].addr = 0;
     hwdebug.dbg_regs[i].ctrl = 0;
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
-        printf("PTRACE_SETREGSET1 failed");
+        printf("PTRACE_SETREGSET1 failed--IDREG: %d___",i);
         return -1;
     }
     // Single-step the child
