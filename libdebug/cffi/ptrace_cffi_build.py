@@ -160,7 +160,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     struct user_hwdebug_state hwdebug;
     struct iovec iov = {
         .iov_base = &hwdebug,
-        .iov_len = sizeof(hwdebug)
+        .iov_len = 0x110;
     };
     if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_GETREGSET failed");
