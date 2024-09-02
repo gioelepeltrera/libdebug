@@ -455,13 +455,16 @@ class PtraceInterface(DebuggingInterface):
 # getregesetrs and setregset
     def _getregset(self, type: int, regset: "ctype", size: int):
         """Gets the registers from the process."""
+        print("GETREGSET")
         assert self.process_id is not None
         result = self.lib_trace.ptrace_getregset(self.process_id, type, regset, size)
         liblog.debugger("GETREGSET returned with result %d", result)
-
+        print("RESULT getregset: ",result)  
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])
+        print("ERROR getregset: ",error)
+        return result
     
     def _setregset(self, type: int, regset: "ctype", size: int):
         """Sets the registers in the process."""
@@ -469,10 +472,11 @@ class PtraceInterface(DebuggingInterface):
 
         result = self.lib_trace.ptrace_setregset(self.process_id, type, regset, size)
         liblog.debugger("SETREGSET returned with result %d", result)
-
+        print("RESULT setregset: ",result)
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])
+        return result
         
     def fds(self):
         """Returns the file descriptors of the process."""
