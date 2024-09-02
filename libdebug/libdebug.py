@@ -203,14 +203,14 @@ class Debugger:
         if self.running:
             raise RuntimeError("Cannot set a breakpoint while the process is running.")
 
-        #if isinstance(position, str):
-        #    address = resolve_symbol_in_maps(position, self.maps())
-        #else:
-        #    address = position
-        #    position = None
-#
-        #address = self.interface.resolve_address(address)
-        address = position
+        if isinstance(position, str):
+            address = resolve_symbol_in_maps(position, self.maps())
+        else:
+            address = position
+            position = None
+        
+        address = self.interface.resolve_address(address)
+        #address = position
         breakpoint = Breakpoint(address, position, 0, hardware_assisted, callback)
 
         self.breakpoints[address] = breakpoint
