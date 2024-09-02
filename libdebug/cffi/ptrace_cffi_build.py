@@ -111,6 +111,7 @@ int ptrace_getregset(int pid, int type,  void *regs, int size)
 
 int ptrace_setregset(int pid, int type, void *regs, int size)
 {
+    printf("SETREGSET_CFFI_____________");
     struct iovec iov = { regs, size };
     return ptrace(PTRACE_SETREGSET, pid, type, &iov);
 }
@@ -176,7 +177,7 @@ uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data)
 int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 {
     int status;
-
+    printf("______CONT_AFTER_BP___CFFI___");
     // restore the previous instruction
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, prev_data);
 
