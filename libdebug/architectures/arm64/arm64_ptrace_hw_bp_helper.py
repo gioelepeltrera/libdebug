@@ -72,10 +72,16 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         
         free = -1 
         print("____BP _DEBUG_Before setting the register___")
+        # Print the table header
+        print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
+        print("-" * 35)
 
+        # Loop through the debug registers and print their values
         for i in range(ARM_DBREGS_COUNT):
-            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
-            if free <1 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
+            print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
+            
+        for i in range(ARM_DBREGS_COUNT):
+            if free <0 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
                 free = i
         
         if free < 0:
@@ -90,17 +96,19 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
 
         #print all the registers
-        res = self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
         print("____BP _DEBUG_After setting the register___")
-        for i in range(ARM_DBREGS_COUNT):
-            #convert all the addresses to string
-            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
+        # Print the table header
+        print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
+        print("-" * 35)
 
-    
-      
+        # Loop through the debug registers and print their values
+        for i in range(ARM_DBREGS_COUNT):
+            print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
+            
         # Save the breakpoint
         self.breakpoint_registers[free] = bp
-
+        print("Hadware breakpoint installed on register: "+str(free))
         liblog.debugger(f"Hardware breakpoint installed on register {free}.")
 
         self.breakpoint_count += 1
