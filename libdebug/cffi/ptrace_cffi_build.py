@@ -181,11 +181,13 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     hwdebug.dbg_regs[i].ctrl = 0;
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
+        printf("PTRACE_SETREGSET1 failed");
         return -1;
     }
     // Single-step the child
     if (ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL) == -1) {
         perror("PTRACE_SINGLESTEP failed");
+        printf("PTRACE_SINGLESTEP failed");
         return -1;
     }
     // Reinstall the breakpoint
@@ -193,13 +195,16 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
+        printf("PTRACE_SETREGSET2 failed");
         return -1;
     }
     // Continue the child
     if (ptrace(PTRACE_CONT, pid, NULL, NULL) == -1) {
         perror("PTRACE_CONT failed");
+        printf("PTRACE_CONT failed");
         return -1;
     }
+    return 0;
 
 }
 
