@@ -41,7 +41,7 @@ ffibuilder.cdef(
     uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data);
 
 
-
+    int ptrace_cont_after_hw_bp(int pid, uint64_t addr);
     int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data);
 """
 )
@@ -71,6 +71,7 @@ ffibuilder.set_source(
 #endif
 #include <sys/ptrace.h>
 
+#define ARM_DBREGS_COUNT 6 //TODO REMOVE THIS somehow
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdint.h>
@@ -153,6 +154,55 @@ int ptrace_cont(int pid)
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
 }
 
+int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
+{
+    //getregset, check the register, remove bp, singlestep, reinstate bp, cont
+    struct user_hwdebug_state hwdebug;
+    struct iovec iov = {
+        .iov_base = &hwdebug,
+        .iov_len = sizeof(hwdebug)
+    };
+    if (ptrace(PTRACE_GETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+        perror("PTRACE_GETREGSET failed");
+        return -1;
+    }
+    // Find the register that contains the breakpoint
+    int i;
+    for (i = 0; i < ARM_DBREGS_COUNT; i++) {
+        if (hwdebug.dbg_regs[i].addr == addr) {
+            break;
+        }
+    }
+    if (i == ARM_DBREGS_COUNT) {
+        perror("Breakpoint not found");
+    }
+    // Remove the breakpoint
+    hwdebug.dbg_regs[i].addr = 0;
+    hwdebug.dbg_regs[i].ctrl = 0;
+    if (ptrace(PTRACE_SETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+        perror("PTRACE_SETREGSET failed");
+        return -1;
+    }
+    // Single-step the child
+    if (ptrace(PTRACE_SINGLESTEP, child_pid, NULL, NULL) == -1) {
+        perror("PTRACE_SINGLESTEP failed");
+        return -1;
+    }
+    // Reinstall the breakpoint
+    hwdebug.dbg_regs[i].addr = addr;
+    hwdebug.dbg_regs[i].ctrl = data;
+    if (ptrace(PTRACE_SETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+        perror("PTRACE_SETREGSET failed");
+        return -1;
+    }
+    // Continue the child
+    if (ptrace(PTRACE_CONT, child_pid, NULL, NULL) == -1) {
+        perror("PTRACE_CONT failed");
+        return -1;
+    }
+
+}
+
 int ptrace_singlestep(int pid)
 {
     return ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
@@ -179,6 +229,7 @@ uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data)
 }
 
 
+//TODO CONTINUE AFTER SOFTWARE BREAKPOINT
 int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 {
     int status;

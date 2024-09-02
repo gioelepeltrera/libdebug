@@ -329,7 +329,20 @@ class PtraceInterface(DebuggingInterface):
         """Continues the execution of the process after a breakpoint was hit."""
         print("CONT_AFTER_BP")
         if breakpoint.hardware:
-            self.continue_execution()
+            architecure = platform.machine()
+            if architecure == "x86_64":
+                self.continue_execution()
+            elif architecure == "aarch64":
+                assert self.process_id is not None
+                assert breakpoint.address in self.hardware_breakpoints
+                print("CONT_AFTER_BP 1")#SEND THE REGID TOO???
+                result = self.lib_trace.ptrace_cont_after_hw_bp(
+                    self.process_id,
+                    breakpoint.address
+                )
+                if result == -1:
+                    errno_val = self.ffi.errno
+                    raise OSError(errno_val, errno.errorcode[errno_val])
             return
 
         assert self.process_id is not None
