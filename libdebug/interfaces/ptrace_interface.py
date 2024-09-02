@@ -227,7 +227,7 @@ class PtraceInterface(DebuggingInterface):
         register_file = self.ffi.new("char[512]")
         liblog.debugger("Getting registers from process %d", self.process_id)
         #TODO AARCH64   getsetregs
-        
+        print("GETREGS___get register holder___")
         architecure = platform.machine()
         if architecure == "x86_64":
             result = self.lib_trace.ptrace_getregs(self.process_id, register_file)
@@ -255,6 +255,7 @@ class PtraceInterface(DebuggingInterface):
         # TODO: this 512 is a magic number, it should be replaced with a constant
         register_file = self.ffi.new("char[512]", buffer)
         architecure = platform.machine()
+        print("SETREGS___set registers___")
         if architecure == "x86_64":
             result = self.lib_trace.ptrace_setregs(self.process_id, register_file)
             if result == -1:
@@ -326,7 +327,7 @@ class PtraceInterface(DebuggingInterface):
 
     def continue_after_breakpoint(self, breakpoint: Breakpoint):
         """Continues the execution of the process after a breakpoint was hit."""
-
+        print("CONT_AFTER_BP")
         if breakpoint.hardware:
             self.continue_execution()
             return
@@ -335,7 +336,7 @@ class PtraceInterface(DebuggingInterface):
         assert breakpoint.address in self.software_breakpoints
 
         instruction = self.software_breakpoints[breakpoint.address]
-
+        print("CONT_AFTER_BP 2")
         result = self.lib_trace.cont_after_bp(
             self.process_id,
             breakpoint.address,
