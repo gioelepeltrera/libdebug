@@ -334,7 +334,6 @@ class PtraceInterface(DebuggingInterface):
                 self.continue_execution()
             elif architecure == "aarch64":
                 assert self.process_id is not None
-                assert breakpoint.address in self.hardware_breakpoints
                 print("CONT_AFTER_BP 1")#SEND THE REGID TOO???
                 result = self.lib_trace.ptrace_cont_after_hw_bp(
                     self.process_id,
