@@ -106,14 +106,12 @@ void ptrace_set_options(int pid)
 
 int ptrace_getregset(int pid, int type,  void *regs, int size)
 {    
-    printf("GETREGSET_CFFI______%d___%d_______",pid, type);
     struct iovec iov = { regs, size};
     return ptrace(PTRACE_GETREGSET, pid, type, &iov);
 }
 
 int ptrace_setregset(int pid, int type, void *regs, int size)
 {
-    printf("SETREGSET_CFFI______%d___%d_______",pid, type);
     struct iovec iov = { regs, size };
     return ptrace(PTRACE_SETREGSET, pid, type, &iov);
 }
@@ -122,7 +120,6 @@ int ptrace_setregset(int pid, int type, void *regs, int size)
 int ptrace_getregs(int pid, void *regs)
 {    
     printf("GETREGS_CFFI____________");
-
     return -1;
 }
 
@@ -150,7 +147,6 @@ int ptrace_setregs(int pid, void *regs)
 
 int ptrace_cont(int pid)
 {   
-    printf("CONT_CFFI______");
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
 }
 
@@ -175,42 +171,36 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     }
     if (i == ARM_DBREGS_COUNT) {
         perror("Breakpoint not found");
-        printf("Breakpoint not found");
     }
     // Remove the breakpoint
     hwdebug.dbg_regs[i].addr = 0;
     hwdebug.dbg_regs[i].ctrl = 0;
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
-        printf("PTRACE_SETREGSET1 failed--IDREG: %d___",i);
         return -1;
     }
     // Single-step the child
     if (ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL) == -1) {
         perror("PTRACE_SINGLESTEP failed");
-        printf("PTRACE_SINGLESTEP failed");
         return -1;
     }
 
         // Wait for the process to stop after single stepping
     int status;
     if (waitpid(pid, &status, 0) == -1) {
-        printf("____waitpid after PTRACE_SINGLESTEP failed______");
+        perror("waitpid failed");
         return -1;
     }
 
     // Ensure the process stopped due to the single-step and not something else
     if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
-        printf("Process did not stop due to single-step. Status: 0x%x______", status);
         return -1;
     }
-
 
     // Reinstall the breakpoint
     
     if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_GETREGSET2 failed");
-        printf("PTRACE_GETREGSET2 failed");
         return -1;
     }
 
@@ -218,13 +208,11 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
-        printf("PTRACE_SETREGSET2 failed");
         return -1;
     }
     // Continue the child
     if (ptrace(PTRACE_CONT, pid, NULL, NULL) == -1) {
         perror("PTRACE_CONT failed");
-        printf("PTRACE_CONT failed");
         return -1;
     }
     return 0;

@@ -227,7 +227,6 @@ class PtraceInterface(DebuggingInterface):
         register_file = self.ffi.new("char[512]")
         liblog.debugger("Getting registers from process %d", self.process_id)
         #TODO AARCH64   getsetregs
-        print("GETREGS___get register holder___")
         architecure = platform.machine()
         if architecure == "x86_64":
             result = self.lib_trace.ptrace_getregs(self.process_id, register_file)
@@ -255,7 +254,6 @@ class PtraceInterface(DebuggingInterface):
         # TODO: this 512 is a magic number, it should be replaced with a constant
         register_file = self.ffi.new("char[512]", buffer)
         architecure = platform.machine()
-        print("SETREGS___set registers___")
         if architecure == "x86_64":
             result = self.lib_trace.ptrace_setregs(self.process_id, register_file)
             if result == -1:
@@ -327,14 +325,12 @@ class PtraceInterface(DebuggingInterface):
 
     def continue_after_breakpoint(self, breakpoint: Breakpoint):
         """Continues the execution of the process after a breakpoint was hit."""
-        print("CONT_AFTER_BP")
         if breakpoint.hardware:
             architecure = platform.machine()
             if architecure == "x86_64":
                 self.continue_execution()
             elif architecure == "aarch64":
                 assert self.process_id is not None
-                print("CONT_AFTER_BP 1")#SEND THE REGID TOO???
                 result = self.lib_trace.ptrace_cont_after_hw_bp(
                     self.process_id,
                     breakpoint.address
@@ -342,13 +338,14 @@ class PtraceInterface(DebuggingInterface):
                 if result == -1:
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
+                breakpoint.hit_count += 1
             return
 
         assert self.process_id is not None
         assert breakpoint.address in self.software_breakpoints
 
         instruction = self.software_breakpoints[breakpoint.address]
-        print("CONT_AFTER_BP 2")
+        #TODO invalid code for aarch64 (CC is an x86 instruction)
         result = self.lib_trace.cont_after_bp(
             self.process_id,
             breakpoint.address,
@@ -468,15 +465,12 @@ class PtraceInterface(DebuggingInterface):
 # getregesetrs and setregset
     def _getregset(self, type: int, regset: "ctype", size: int):
         """Gets the registers from the process."""
-        print("GETREGSET")
         assert self.process_id is not None
         result = self.lib_trace.ptrace_getregset(self.process_id, type, regset, size)
         liblog.debugger("GETREGSET returned with result %d", result)
-        print("RESULT getregset: ",result)  
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])
-        print("ERROR getregset: ",error)
         return result
     
     def _setregset(self, type: int, regset: "ctype", size: int):
@@ -485,7 +479,6 @@ class PtraceInterface(DebuggingInterface):
 
         result = self.lib_trace.ptrace_setregset(self.process_id, type, regset, size)
         liblog.debugger("SETREGSET returned with result %d", result)
-        print("RESULT setregset: ",result)
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])

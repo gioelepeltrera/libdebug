@@ -22,15 +22,6 @@ from libdebug.data.breakpoint import Breakpoint
 from libdebug.liblog import liblog
 from libdebug.cffi._ptrace_cffi import ffi, lib
 
-# Define the offsets and control bits for ARM debug registers
-ARM_DBGREGS_OFF = {
-    "BVR0": 0x100,  # Breakpoint Value Register 0
-    "BVR1": 0x104,  # Breakpoint Value Register 1
-    "BVR2": 0x108,  # Breakpoint Value Register 2
-    "BVR3": 0x10C,  # Breakpoint Value Register 3
-    # Add more if needed
-}
-
 ARM_DBGREGS_CTRL_LOCAL = {"BVR0": 0x1, "BVR1": 0x2, "BVR2": 0x4, "BVR3": 0x8}
 ARM_DBGREGS_CTRL_COND = {"BVR0": 0x4, "BVR1": 0x8, "BVR2": 0x10, "BVR3": 0x20}
 ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}  # ARM conditions
@@ -40,6 +31,7 @@ ARM_DBGREGS_CTRL_LEN_VAL = {1: 0, 2: 1, 4: 3}  # ARM lengths (byte, halfword, wo
 ARM_DBREGS_COUNT = 6  # Adjust according to the specific ARM implementation
 
 NT_ARM_HW_BREAK = 0x402
+USER_HWDEBUG_STATE_LEN = 0x68
 
 class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
     """A hardware breakpoint manager for the ARM architecture.
@@ -68,17 +60,17 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             raise RuntimeError("No more hardware breakpoints available.")
 
         hw_dbg_state = ffi.new("struct user_hwdebug_state *")
-        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         
         free = -1 
-        print("____BP _DEBUG_Before setting the register___")
-        # Print the table header
-        print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
-        print("-" * 35)
-
-        # Loop through the debug registers and print their values
-        for i in range(ARM_DBREGS_COUNT):
-            print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
+        #print("____BP _DEBUG_Before setting the register___")
+        ## Print the table header
+        #print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
+        #print("-" * 35)
+        #
+        ## Loop through the debug registers and print their values
+        #for i in range(ARM_DBREGS_COUNT):
+        #    print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
             
         for i in range(ARM_DBREGS_COUNT):
             if free <0 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
@@ -93,22 +85,20 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         hw_dbg_state.dbg_regs[free].addr = bp.address
         hw_dbg_state.dbg_regs[free].ctrl = 0x25#TODO set better
 
-        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
 
         #print all the registers
-        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        print("____BP _DEBUG_After setting the register___")
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         # Print the table header
-        print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
-        print("-" * 35)
-
-        # Loop through the debug registers and print their values
-        for i in range(ARM_DBREGS_COUNT):
-            print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
+        #print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
+        #print("-" * 35)
+#
+        ## Loop through the debug registers and print their values
+        #for i in range(ARM_DBREGS_COUNT):
+        #    print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
             
         # Save the breakpoint
         self.breakpoint_registers[free] = bp
-        print("Hadware breakpoint installed on register: "+str(free))
         liblog.debugger(f"Hardware breakpoint installed on register {free}.")
 
         self.breakpoint_count += 1
@@ -119,10 +109,9 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             raise RuntimeError("No more hardware breakpoints to remove.")
 
         hw_dbg_state = ffi.new("struct user_hwdebug_state *")
-        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         
         free = -1 
-        print("____BP _DEBUG_Before nullifying the register___")
 
         for i in range(ARM_DBREGS_COUNT):
             if hw_dbg_state.dbg_regs[i].addr == bp.address:
@@ -137,13 +126,13 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         hw_dbg_state.dbg_regs[free].addr = 0
         hw_dbg_state.dbg_regs[free].ctrl = 0
 
-        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
+        self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
     
         #print all the registers
-        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, 104)
-        print("____BP _DEBUG_After setting the register___")
-        for i in range(ARM_DBREGS_COUNT):
-            print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
+        self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
+        #print("____BP _DEBUG_After setting the register___")
+        #for i in range(ARM_DBREGS_COUNT):
+        #    print(str(i)+" -- "+str(hw_dbg_state.dbg_regs[i].addr)+"  -- ctrl: "+str(hw_dbg_state.dbg_regs[i].ctrl))
 
     
         # Remove the breakpoint
