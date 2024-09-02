@@ -162,7 +162,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
         .iov_base = &hwdebug,
         .iov_len = sizeof(hwdebug)
     };
-    if (ptrace(PTRACE_GETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_GETREGSET failed");
         return -1;
     }
@@ -179,24 +179,24 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     // Remove the breakpoint
     hwdebug.dbg_regs[i].addr = 0;
     hwdebug.dbg_regs[i].ctrl = 0;
-    if (ptrace(PTRACE_SETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;
     }
     // Single-step the child
-    if (ptrace(PTRACE_SINGLESTEP, child_pid, NULL, NULL) == -1) {
+    if (ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL) == -1) {
         perror("PTRACE_SINGLESTEP failed");
         return -1;
     }
     // Reinstall the breakpoint
     hwdebug.dbg_regs[i].addr = addr;
     hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
-    if (ptrace(PTRACE_SETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;
     }
     // Continue the child
-    if (ptrace(PTRACE_CONT, child_pid, NULL, NULL) == -1) {
+    if (ptrace(PTRACE_CONT, pid, NULL, NULL) == -1) {
         perror("PTRACE_CONT failed");
         return -1;
     }
