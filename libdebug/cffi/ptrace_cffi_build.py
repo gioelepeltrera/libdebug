@@ -192,6 +192,13 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
         return -1;
     }
     // Reinstall the breakpoint
+    
+    if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
+        perror("PTRACE_GETREGSET2 failed");
+        printf("PTRACE_GETREGSET2 failed");
+        return -1;
+    }
+
     hwdebug.dbg_regs[i].addr = addr;
     hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
