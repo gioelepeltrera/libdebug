@@ -148,7 +148,8 @@ int ptrace_setregs(int pid, void *regs)
 
 
 int ptrace_cont(int pid)
-{
+{   
+    printf("CONT_CFFI______");
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
 }
 
