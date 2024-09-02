@@ -190,7 +190,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     }
     // Reinstall the breakpoint
     hwdebug.dbg_regs[i].addr = addr;
-    hwdebug.dbg_regs[i].ctrl = data;
+    hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
     if (ptrace(PTRACE_SETREGSET, child_pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;
