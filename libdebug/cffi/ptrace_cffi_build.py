@@ -191,6 +191,21 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
         printf("PTRACE_SINGLESTEP failed");
         return -1;
     }
+
+        // Wait for the process to stop after single stepping
+    int status;
+    if (waitpid(pid, &status, 0) == -1) {
+        printf("____waitpid after PTRACE_SINGLESTEP failed______");
+        return -1;
+    }
+
+    // Ensure the process stopped due to the single-step and not something else
+    if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
+        printf("Process did not stop due to single-step. Status: 0x%x______", status);
+        return -1;
+    }
+
+
     // Reinstall the breakpoint
     
     if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
