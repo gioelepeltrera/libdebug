@@ -338,7 +338,6 @@ class PtraceInterface(DebuggingInterface):
                 if result == -1:
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
-                breakpoint.hit_count += 1
             return
 
         assert self.process_id is not None
