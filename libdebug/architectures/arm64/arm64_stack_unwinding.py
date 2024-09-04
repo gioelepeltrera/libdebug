@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-class Aarch64StackUnwinding():
+class Arm64StackUnwinding():
     """
     Class that provides stack unwinding for the AArch64 architecture.
     """
