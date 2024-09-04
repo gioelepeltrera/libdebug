@@ -31,7 +31,7 @@ class Arm64StackUnwinding():
         """
 
         # Start with the current PC (Program Counter, equivalent to RIP in x86-64)
-        current_fp = target.fp  # Frame pointer (x29)
+        current_fp = target.x29  # Frame pointer (x29)
         stack_trace = [target.pc]  # Program counter (x30 holds return address in AArch64)
 
         while current_fp:
