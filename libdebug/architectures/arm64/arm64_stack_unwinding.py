@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
-class Arm64StackUnwinding:
+class Aarch64StackUnwinding():
     """
-    Class that provides stack unwinding for the ARM64 (AArch64) architecture.
+    Class that provides stack unwinding for the AArch64 architecture.
     """
 
     def unwind(self, target: "Debugger") -> list:
@@ -30,19 +29,23 @@ class Arm64StackUnwinding:
         Returns:
             list: A list of return addresses.
         """
-        current_fp = target.regs['fp']  # ARM64 frame pointer (x29)
-        stack_trace = [target.regs['pc']]  # Start with the program counter (x30 or LR in ARM64)
+
+        # Start with the current PC (Program Counter, equivalent to RIP in x86-64)
+        current_fp = target.fp  # Frame pointer (x29)
+        stack_trace = [target.pc]  # Program counter (x30 holds return address in AArch64)
 
         while current_fp:
             try:
-                # Read the return address from the memory at fp + 8 (Link Register)
-                return_address = int.from_bytes(target.memory[current_fp + 8:current_fp + 16], byteorder="little")
-                
-                # Read the previous frame pointer (fp)
-                current_fp = int.from_bytes(target.memory[current_fp:current_fp + 8], byteorder="little")
-                
+                # Read the return address from the link register (LR) or the stack
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+
+                # Read the previous frame pointer (x29) and set it as the current one
+                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+
+                # Append the return address to the stack trace
                 stack_trace.append(return_address)
             except OSError:
+                # If we hit an error while reading memory, stop unwinding
                 break
 
         return stack_trace
