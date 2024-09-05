@@ -346,6 +346,7 @@ class PtraceInterface(DebuggingInterface):
         instruction = self.software_breakpoints[breakpoint.address]
         #TODO invalid code for aarch64 (CC is an x86 instruction)
         result = -1
+        architecure = platform.machine()
         if architecure == "x86_64":
             result = self.lib_trace.cont_after_bp(
                 self.process_id,
