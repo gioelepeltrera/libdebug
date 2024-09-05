@@ -64,21 +64,23 @@ class Arm64StackUnwinding():
             target (Debugger): The target Debugger.
         
         Returns:
-            list: A list of return addresses (stack trace).
+            list: A list of return addresses.
         """
 
         # Start with the current PC (Program Counter), add it to the stack trace
         stack_trace = [target.pc]  # PC is the current instruction pointer
 
-        # If valid, add the return address from the link register (x30)
-        if target.x30 and target.x30 != 0:
-            stack_trace.append(target.x30)
-
         # Use the frame pointer (x29) to unwind through the stack frames
         current_fp = target.x29
 
-        while current_fp:
+        # To avoid duplicates, keep track of already visited frame pointers
+        visited_fps = set()
+
+        while current_fp and current_fp not in visited_fps:
             try:
+                # Mark the current frame pointer as visited to prevent duplicates
+                visited_fps.add(current_fp)
+
                 # Read the return address from the current stack frame (located at current_fp + 8)
                 return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
@@ -89,7 +91,7 @@ class Arm64StackUnwinding():
                 current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
             except OSError:
-                # If there is an error while reading memory (invalid address), stop unwinding
+                # If we hit an error while reading memory, stop unwinding
                 break
 
         return stack_trace
