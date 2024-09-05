@@ -345,12 +345,27 @@ class PtraceInterface(DebuggingInterface):
 
         instruction = self.software_breakpoints[breakpoint.address]
         #TODO invalid code for aarch64 (CC is an x86 instruction)
-        result = self.lib_trace.cont_after_bp(
-            self.process_id,
-            breakpoint.address,
-            instruction,
-            (instruction & ((2**56 - 1) << 8)) | 0xCC,
-        )
+        result = -1
+        if architecure == "x86_64":
+            result = self.lib_trace.cont_after_bp(
+                self.process_id,
+                breakpoint.address,
+                instruction,
+                (instruction & ((2**56 - 1) << 8)) | 0xCC,
+            )
+
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+        elif architecure == "aarch64":
+            result = self.lib_trace.cont_after_bp(
+                self.process_id,
+                breakpoint.address,
+                instruction,
+                0xD4200000, # This is the 32-bit BRK instruction for AArch64
+            )
+        else:
+            raise NotImplementedError(f"Architecture {architecure} not supported")
 
         if result == -1:
             errno_val = self.ffi.errno
@@ -367,8 +382,21 @@ class PtraceInterface(DebuggingInterface):
         assert self.process_id is not None
         instruction = self._peek_mem(address)
         self.software_breakpoints[address] = instruction
-        # TODO: this is not correct for all architectures
-        self._poke_mem(address, (instruction & ((2**56 - 1) << 8)) | 0xCC)
+
+        architecure = platform.machine()
+        if architecure == "x86_64":
+            # TODO: this is not correct for all architectures
+            self._poke_mem(address, (instruction & ((2**56 - 1) << 8)) | 0xCC)
+        elif architecure == "aarch64":
+            print("Setting software breakpoint at address 0x{:x}".format(address))
+            # Replace the instruction with the AArch64 BRK #0xF000 (encoded as 0xD4200000)
+            brk_instruction = 0xD4200000  # This is the 32-bit BRK instruction for AArch64
+            
+            # Write the BRK instruction to the memory at the given address
+            self._poke_mem(address, brk_instruction.to_bytes(4, byteorder="little"))
+
+        else:
+            raise NotImplementedError(f"Architecture {architecure} not supported")
 
     def _unset_sw_breakpoint(self, address: int):
         """Unsets a software breakpoint at the specified address.
