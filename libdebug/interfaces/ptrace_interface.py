@@ -393,7 +393,7 @@ class PtraceInterface(DebuggingInterface):
             brk_instruction = 0xD4200000  # This is the 32-bit BRK instruction for AArch64
             
             # Write the BRK instruction to the memory at the given address
-            self._poke_mem(address, brk_instruction.to_bytes(4, byteorder="little"))
+            self._poke_mem(address, brk_instruction)
 
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
