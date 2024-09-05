@@ -67,28 +67,33 @@ class Arm64StackUnwinding():
             list: A list of return addresses.
         """
 
-        # Start with the current PC (Program Counter), add it to the stack trace
-        stack_trace = [target.pc]  # PC is the current instruction pointer
+        # Start with the current PC (Program Counter)
+        stack_trace = [target.pc]  # Add the current instruction pointer (PC)
 
-        # Use the frame pointer (x29) to unwind through the stack frames
+        # Start with the current frame pointer (x29)
         current_fp = target.x29
 
-        # To avoid duplicates, keep track of already visited frame pointers
-        visited_fps = set()
-
-        while current_fp and current_fp not in visited_fps:
+        while current_fp:
             try:
-                # Mark the current frame pointer as visited to prevent duplicates
-                visited_fps.add(current_fp)
-
-                # Read the return address from the current stack frame (located at current_fp + 8)
-                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+                # First, check if the return address is in the link register (x30)
+                if target.x30:
+                    return_address = target.x30
+                else:
+                    # Otherwise, read the return address from the stack (FP + 8)
+                    return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
                 # Append the return address to the stack trace
                 stack_trace.append(return_address)
 
-                # Read the previous frame pointer (located at current_fp)
-                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                # Read the previous frame pointer (FP), which should be at current_fp
+                next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+
+                # Check for consistency (if the frame pointer is the same, break to avoid infinite loops)
+                if next_fp == current_fp:
+                    break
+
+                # Move to the next frame pointer
+                current_fp = next_fp
 
             except OSError:
                 # If we hit an error while reading memory, stop unwinding
