@@ -325,6 +325,7 @@ class PtraceInterface(DebuggingInterface):
 
     def continue_after_breakpoint(self, breakpoint: Breakpoint):
         """Continues the execution of the process after a breakpoint was hit."""
+        print("Continuing after breakpoint, is hardware breakpoint: "+str(breakpoint.hardware))
         if breakpoint.hardware:
             architecure = platform.machine()
             if architecure == "x86_64":
@@ -339,10 +340,10 @@ class PtraceInterface(DebuggingInterface):
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
             return
-
+        print("Not a hardware breakpoint")
         assert self.process_id is not None
         assert breakpoint.address in self.software_breakpoints
-
+        print("Continuing after breakpoint at address 0x{:x}".format(breakpoint.address))
         instruction = self.software_breakpoints[breakpoint.address]
         #TODO invalid code for aarch64 (CC is an x86 instruction)
         result = -1
@@ -359,6 +360,7 @@ class PtraceInterface(DebuggingInterface):
                 errno_val = self.ffi.errno
                 raise OSError(errno_val, errno.errorcode[errno_val])
         elif architecure == "aarch64":
+            print("AARCH64: Continuing after breakpoint at address 0x{:x}".format(breakpoint.address))
             result = self.lib_trace.cont_after_bp(
                 self.process_id,
                 breakpoint.address,
