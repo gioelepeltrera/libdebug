@@ -367,6 +367,10 @@ class PtraceInterface(DebuggingInterface):
                 instruction,
                 0xD4200000, # This is the 32-bit BRK instruction for AArch64
             )
+            print("AARCH64 done cont after swpb: " + str(result))
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 
