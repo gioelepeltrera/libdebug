@@ -51,6 +51,7 @@
 #
 #        return stack_trace
 #
+
 class Arm64StackUnwinding():
     """
     Class that provides stack unwinding for the AArch64 architecture.
@@ -64,32 +65,36 @@ class Arm64StackUnwinding():
             target (Debugger): The target Debugger.
         
         Returns:
-            list: A list of return addresses.
+            list: A list of return addresses (stack trace).
         """
-        # Start with the current PC (Program Counter)
-        stack_trace = [target.pc]
 
-        # Initialize the current frame pointer (FP) and previous frame pointer to detect loops
+        # Start with the current PC (Program Counter), add it to the stack trace
+        stack_trace = [target.pc]  # PC is the current instruction pointer
+        lr = None
+        # If valid, add the return address from the link register (x30)
+        if target.x30 and target.x30 != 0:
+            lr = target.x30
+
+        # Use the frame pointer (x29) to unwind through the stack frames
         current_fp = target.x29
-        previous_fp = None
-
-        # Loop until the frame pointer is invalid
-        while current_fp and current_fp != previous_fp:
+        temp_stack = []
+        while current_fp:
             try:
-                # Read the return address from the stack (FP + 8)
+                # Read the return address from the current stack frame (located at current_fp + 8)
                 return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
-                
+
                 # Append the return address to the stack trace
-                stack_trace.append(return_address)
+                temp_stack.append(return_address)
 
-                # Update previous frame pointer to detect loops
-                previous_fp = current_fp
-
-                # Move to the next frame pointer (FP should point to the previous frame's FP)
+                # Read the previous frame pointer (located at current_fp)
                 current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
             except OSError:
-                # Stop unwinding if there's an issue accessing memory
+                # If there is an error while reading memory (invalid address), stop unwinding
                 break
-
+        if lr not in temp_stack:
+            stack_trace  = stack_trace + [lr] + temp_stack
+        else:
+            stack_trace = stack_trace + temp_stack
+            
         return stack_trace
