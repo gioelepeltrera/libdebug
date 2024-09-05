@@ -263,10 +263,23 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     if (status == -1) {
         return status;
     }
+#ifdef __aarch64__
+
+    // wait for the child process to complete the step
+    waitpid(pid, &status, 0);  // Removed the "1 << 30", as it was likely unnecessary
+
+    if (WIFSTOPPED(status)) {
+        printf("Single-step completed, restoring the breakpoint\\n");
+    } else {
+        printf("Unexpected status: 0x%x\n", status);
+    }
+
+#else
 
     // wait for the child
     waitpid(pid, &status, 1 << 30);
 
+#endif
     // restore the breakpoint
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
 
