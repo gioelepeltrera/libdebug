@@ -269,9 +269,9 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     waitpid(pid, &status, 0);  // Removed the "1 << 30", as it was likely unnecessary
 
     if (WIFSTOPPED(status)) {
-        printf("Single-step completed, restoring the breakpoint\\n");
+        printf("_________-Single-step completed, restoring the breakpoint____________");
     } else {
-        printf("Unexpected status: 0x%x\n", status);
+        printf("___________Unexpected status: 0x%x___________", status);
     }
 
 #else
