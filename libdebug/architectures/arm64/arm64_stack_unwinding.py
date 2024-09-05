@@ -66,37 +66,30 @@ class Arm64StackUnwinding():
         Returns:
             list: A list of return addresses.
         """
-
         # Start with the current PC (Program Counter)
-        stack_trace = [target.pc]  # Add the current instruction pointer (PC)
+        stack_trace = [target.pc]
 
-        # Start with the current frame pointer (x29)
+        # Initialize the current frame pointer (FP) and previous frame pointer to detect loops
         current_fp = target.x29
+        previous_fp = None
 
-        while current_fp:
+        # Loop until the frame pointer is invalid
+        while current_fp and current_fp != previous_fp:
             try:
-                # First, check if the return address is in the link register (x30)
-                if target.x30:
-                    return_address = target.x30
-                else:
-                    # Otherwise, read the return address from the stack (FP + 8)
-                    return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
-
+                # Read the return address from the stack (FP + 8)
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+                
                 # Append the return address to the stack trace
                 stack_trace.append(return_address)
 
-                # Read the previous frame pointer (FP), which should be at current_fp
-                next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                # Update previous frame pointer to detect loops
+                previous_fp = current_fp
 
-                # Check for consistency (if the frame pointer is the same, break to avoid infinite loops)
-                if next_fp == current_fp:
-                    break
-
-                # Move to the next frame pointer
-                current_fp = next_fp
+                # Move to the next frame pointer (FP should point to the previous frame's FP)
+                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
             except OSError:
-                # If we hit an error while reading memory, stop unwinding
+                # Stop unwinding if there's an issue accessing memory
                 break
 
         return stack_trace
