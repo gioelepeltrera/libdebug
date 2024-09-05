@@ -266,8 +266,16 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 #ifdef __aarch64__
 
     // wait for the child process to complete the step
-    waitpid(pid, &status, 0);  // Removed the "1 << 30", as it was likely unnecessary
 
+    if (waitpid(pid, &status, 0) == -1) {
+        perror("waitpid failed");
+        return -1;
+    }
+
+    // Ensure the process stopped due to the single-step and not something else
+    if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
+        return -1;
+    }
     if (WIFSTOPPED(status)) {
         printf("_________-Single-step completed, restoring the breakpoint____________");
     } else {
@@ -281,15 +289,16 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 
 #endif
     // restore the breakpoint
+    printf("___________Pre pokedata_____________");
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
 
     if (status == -1) {
         return status;
     }
-
+    printf("___________Restored the breakpoint_____________");
     // continue the execution
     status = ptrace(PTRACE_CONT, pid, NULL, NULL);
-
+    printf("___________Continued the execution, return status %d_____________", status);
     return status;
 }
 """,
