@@ -281,16 +281,15 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     } else {
         printf("___________Unexpected status: 0x%x___________", status);
     }
-
+    uint32_t brk_instruction = 0xd4200000;
+    status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, brk_instruction);
 #else
 
     // wait for the child
     waitpid(pid, &status, 1 << 30);
 
-#endif
-    // restore the breakpoint
-    printf("___________Pre pokedata_____________");
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
+#endif
 
     if (status == -1) {
         return status;
