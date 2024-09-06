@@ -75,7 +75,9 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         # Write the breakpoint address in the register
         hw_dbg_state.dbg_regs[free].addr = bp.address
         enabled = 1
-        ctrl = (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) | (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1) | enabled
+        ctrl = (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) |\
+              (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | \
+                (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1) | enabled
         print("ctrl: "+str(ctrl))
         hw_dbg_state.dbg_regs[free].ctrl = ctrl
 
