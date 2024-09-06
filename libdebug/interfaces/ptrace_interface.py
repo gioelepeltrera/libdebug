@@ -397,9 +397,10 @@ class PtraceInterface(DebuggingInterface):
         elif architecure == "aarch64":
             print("Setting software breakpoint at address 0x{:x}".format(address))
             # Replace the instruction with the AArch64 BRK #0xF000 (encoded as 0xD4200000)
-            brk_instruction = 0xD4200000  # This is the 32-bit BRK instruction for AArch64
             
-            # Write the BRK instruction to the memory at the given address
+            # Write the BRK instruction to the memory at the given address 
+            brk_instruction = (instruction & 0xFFFFFFFF00000000) | 0xD4200000
+
             self._poke_mem(address, brk_instruction)
 
         else:
