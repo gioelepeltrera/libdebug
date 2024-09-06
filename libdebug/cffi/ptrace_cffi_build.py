@@ -263,7 +263,7 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     if (status == -1) {
         return status;
     }
-#ifdef __aarch64__
+/*#ifdef __aarch64__
 
     // wait for the child process to complete the step
 
@@ -284,12 +284,12 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
 #else
-
+*/
     // wait for the child
     waitpid(pid, &status, 1 << 30);
 
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
-#endif
+//#endif
 
     if (status == -1) {
         return status;
