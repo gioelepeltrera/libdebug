@@ -333,7 +333,9 @@ class PtraceInterface(DebuggingInterface):
                 assert self.process_id is not None
                 ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
                 ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}
-                ARM_DBGREGS_CTRL_LEN_VAL = {1: 1, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
+#                ARM_DBGREGS_CTRL_LEN_VAL = {1: 1, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
+                ARM_DBGREGS_CTRL_LEN_VAL = {0: 0, 1:1, 2: 2, 3:3}  # ARM lengths (byte, halfword, word)
+
                 enabled = 1
                 control = (ARM_DBGREGS_CTRL_LEN_VAL[breakpoint.length] << 5)        | \
                             (ARM_DBGREGS_CTRL_COND_VAL[breakpoint.condition] << 3)  | \
