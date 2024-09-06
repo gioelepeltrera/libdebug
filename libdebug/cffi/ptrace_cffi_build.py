@@ -249,7 +249,6 @@ uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data)
 int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 {
     int status;
-    printf("______CONT_AFTER_BP___CFFI___");
     // restore the previous instruction
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, prev_data);
 
@@ -263,41 +262,16 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     if (status == -1) {
         return status;
     }
-/*#ifdef __aarch64__
-
-    // wait for the child process to complete the step
-
-    if (waitpid(pid, &status, 0) == -1) {
-        perror("waitpid failed");
-        return -1;
-    }
-
-    // Ensure the process stopped due to the single-step and not something else
-    if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
-        return -1;
-    }
-    if (WIFSTOPPED(status)) {
-        printf("_________-Single-step completed, restoring the breakpoint____________");
-    } else {
-        printf("___________Unexpected status: 0x%x___________", status);
-    }
-
-    status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
-#else
-*/
     // wait for the child
     waitpid(pid, &status, 1 << 30);
 
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
-//#endif
 
     if (status == -1) {
         return status;
     }
-    printf("___________Restored the breakpoint_____________");
     // continue the execution
     status = ptrace(PTRACE_CONT, pid, NULL, NULL);
-    printf("___________Continued the execution, return status %d_____________", status);
     return status;
 }
 """,

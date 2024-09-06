@@ -325,7 +325,6 @@ class PtraceInterface(DebuggingInterface):
 
     def continue_after_breakpoint(self, breakpoint: Breakpoint):
         """Continues the execution of the process after a breakpoint was hit."""
-        print("Continuing after breakpoint, is hardware breakpoint: "+str(breakpoint.hardware))
         if breakpoint.hardware:
             architecure = platform.machine()
             if architecure == "x86_64":
@@ -340,12 +339,9 @@ class PtraceInterface(DebuggingInterface):
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
             return
-        print("Not a hardware breakpoint")
         assert self.process_id is not None
         assert breakpoint.address in self.software_breakpoints
-        print("Continuing after breakpoint at address 0x{:x}".format(breakpoint.address))
         instruction = self.software_breakpoints[breakpoint.address]
-        #TODO invalid code for aarch64 (CC is an x86 instruction)
         result = -1
         architecure = platform.machine()
         if architecure == "x86_64":
@@ -355,22 +351,13 @@ class PtraceInterface(DebuggingInterface):
                 instruction,
                 (instruction & ((2**56 - 1) << 8)) | 0xCC,
             )
-
-            if result == -1:
-                errno_val = self.ffi.errno
-                raise OSError(errno_val, errno.errorcode[errno_val])
         elif architecure == "aarch64":
-            print("AARCH64: Continuing after breakpoint at address 0x{:x}".format(breakpoint.address))
             result = self.lib_trace.cont_after_bp(
                 self.process_id,
                 breakpoint.address,
                 instruction,
                 (instruction & 0xFFFFFFFF00000000) | 0xD4200000
             )
-            print("AARCH64 done cont after swpb: " + str(result))
-            if result == -1:
-                errno_val = self.ffi.errno
-                raise OSError(errno_val, errno.errorcode[errno_val])
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 
@@ -395,12 +382,8 @@ class PtraceInterface(DebuggingInterface):
             # TODO: this is not correct for all architectures
             self._poke_mem(address, (instruction & ((2**56 - 1) << 8)) | 0xCC)
         elif architecure == "aarch64":
-            print("Setting software breakpoint at address 0x{:x}".format(address))
             # Replace the instruction with the AArch64 BRK #0xF000 (encoded as 0xD4200000)
-            
-            # Write the BRK instruction to the memory at the given address 
             brk_instruction = (instruction & 0xFFFFFFFF00000000) | 0xD4200000
-
             self._poke_mem(address, brk_instruction)
 
         else:
