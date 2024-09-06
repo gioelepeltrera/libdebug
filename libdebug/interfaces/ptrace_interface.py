@@ -365,7 +365,7 @@ class PtraceInterface(DebuggingInterface):
                 self.process_id,
                 breakpoint.address,
                 instruction,
-                0xD4200000, # This is the 32-bit BRK instruction for AArch64
+                (instruction & 0xFFFFFFFF00000000) | 0xD4200000
             )
             print("AARCH64 done cont after swpb: " + str(result))
             if result == -1:

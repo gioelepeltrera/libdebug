@@ -281,9 +281,8 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     } else {
         printf("___________Unexpected status: 0x%x___________", status);
     }
-    uint64_t brk_instruction = (prev_data & 0xFFFFFFFF00000000) | 0xD4200000;
 
-    status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, brk_instruction);
+    status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
 #else
 
     // wait for the child
