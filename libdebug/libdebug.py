@@ -192,7 +192,7 @@ class Debugger:
         position: int | str,
         callback: None | Callable[["Debugger", Breakpoint], None] = None,
         hardware_assisted: bool = False,
-        length: int = -1,
+        length: int = 1,
     ):
         """Sets a breakpoint at the specified location. The callback will be executed when the breakpoint is hit.
 
@@ -212,11 +212,7 @@ class Debugger:
             position = None
         
         address = self.interface.resolve_address(address)
-        if length == -1:
-            if platform.architecture == "aarch64":
-                length = 1
-            else:
-                length = 0
+
         breakpoint = Breakpoint(address, position, 0, hardware_assisted, callback, length)
 
         self.breakpoints[address] = breakpoint
