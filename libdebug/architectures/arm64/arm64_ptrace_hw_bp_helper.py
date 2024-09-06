@@ -20,12 +20,10 @@ from libdebug.architectures.ptrace_hardware_breakpoint_manager import (
 )
 from libdebug.data.breakpoint import Breakpoint
 from libdebug.liblog import liblog
-from libdebug.cffi._ptrace_cffi import ffi, lib
+from libdebug.cffi._ptrace_cffi import ffi
 
-ARM_DBGREGS_CTRL_LOCAL = {"BVR0": 0x1, "BVR1": 0x2, "BVR2": 0x4, "BVR3": 0x8}
-ARM_DBGREGS_CTRL_COND = {"BVR0": 0x4, "BVR1": 0x8, "BVR2": 0x10, "BVR3": 0x20}
-ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}  # ARM conditions
-ARM_DBGREGS_CTRL_LEN = {"BVR0": 0x2, "BVR1": 0x4, "BVR2": 0x8, "BVR3": 0x10}
+ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
+ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}
 ARM_DBGREGS_CTRL_LEN_VAL = {1: 0, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
 
 ARM_DBREGS_COUNT = 6  # Adjust according to the specific ARM implementation
@@ -63,15 +61,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         
         free = -1 
-        #print("____BP _DEBUG_Before setting the register___")
-        ## Print the table header
-        #print(f"{'Index':<5} {'Address':<18} {'Control':<10}")
-        #print("-" * 35)
-        #
-        ## Loop through the debug registers and print their values
-        #for i in range(ARM_DBREGS_COUNT):
-        #    print(f"{i:<5} 0x{hw_dbg_state.dbg_regs[i].addr:<16x} 0x{hw_dbg_state.dbg_regs[i].ctrl:<8x}")
-            
+        
         for i in range(ARM_DBREGS_COUNT):
             if free <0 and hw_dbg_state.dbg_regs[i].ctrl & 1 == 0:
                 free = i
@@ -83,7 +73,10 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
 
         # Write the breakpoint address in the register
         hw_dbg_state.dbg_regs[free].addr = bp.address
-        hw_dbg_state.dbg_regs[free].ctrl = 0x25#TODO set better
+        enabled = 1
+        ctrl = (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) | (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1) | enabled
+        print("ctrl: "+str(ctrl))
+        hw_dbg_state.dbg_regs[free].ctrl = ctrl
 
         self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
 

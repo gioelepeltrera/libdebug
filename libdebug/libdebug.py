@@ -218,6 +218,7 @@ class Debugger:
             (self.interface.set_breakpoint, [breakpoint])
         )
         #TODO REMOVE
+        #insert in print whether hw or sw
         print("LIBDEBUG: Breakpoint set at", hex(address))
 
     def jump(self, location: int | bytes):

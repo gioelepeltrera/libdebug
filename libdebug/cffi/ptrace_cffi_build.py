@@ -41,7 +41,7 @@ ffibuilder.cdef(
     uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data);
 
 
-    int ptrace_cont_after_hw_bp(int pid, uint64_t addr);
+    int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control);
     int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data);
 """
 )
@@ -150,7 +150,7 @@ int ptrace_cont(int pid)
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
 }
 
-int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
+int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
 {
     //getregset, check the register, remove bp, singlestep, reinstate bp, cont
     struct user_hwdebug_state hwdebug;
@@ -205,7 +205,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr)
     //}
 
     hwdebug.dbg_regs[i].addr = addr;
-    hwdebug.dbg_regs[i].ctrl = 0x25;//TODO REMOVE THIS
+    hwdebug.dbg_regs[i].ctrl = control;
     if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;

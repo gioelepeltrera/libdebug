@@ -331,9 +331,18 @@ class PtraceInterface(DebuggingInterface):
                 self.continue_execution()
             elif architecure == "aarch64":
                 assert self.process_id is not None
+                ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
+                ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}
+                ARM_DBGREGS_CTRL_LEN_VAL = {1: 0, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
+                enabled = 1
+                control = (ARM_DBGREGS_CTRL_LEN_VAL[breakpoint.length] << 5)        | \
+                            (ARM_DBGREGS_CTRL_COND_VAL[breakpoint.condition] << 3)  | \
+                            (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1)                 | \
+                            enabled
                 result = self.lib_trace.ptrace_cont_after_hw_bp(
                     self.process_id,
-                    breakpoint.address
+                    breakpoint.address,
+                    control,
                 )
                 if result == -1:
                     errno_val = self.ffi.errno
@@ -356,7 +365,7 @@ class PtraceInterface(DebuggingInterface):
                 self.process_id,
                 breakpoint.address,
                 instruction,
-                (instruction & 0xFFFFFFFF00000000) | 0xD4200000
+                (instruction & 0xFFFFFFFF00000000) | 0xD4200000,
             )
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
