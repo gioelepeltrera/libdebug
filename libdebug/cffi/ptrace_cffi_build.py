@@ -71,7 +71,8 @@ ffibuilder.set_source(
 #endif
 #include <sys/ptrace.h>
 
-#define ARM_DBREGS_COUNT 6 //TODO REMOVE THIS somehow
+#define ARM_DBREGS_COUNT 6
+#define ARM_WATCHDB_COUNT 4 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdint.h>
@@ -152,30 +153,39 @@ int ptrace_cont(int pid)
 
 int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
 {
+    int condition = (control >> 3) & 0x3;
+
     //getregset, check the register, remove bp, singlestep, reinstate bp, cont
     struct user_hwdebug_state hwdebug;
     struct iovec iov = {
         .iov_base = &hwdebug,
         .iov_len = 0x68
     };
-    if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    unsigned int table = NT_ARM_HW_BREAK;
+    int count  = ARM_DBREGS_COUNT;
+    if (condition != 0){
+        iov.iov_len = 0x48;
+        table = NT_ARM_HW_WATCH;
+        count = ARM_WATCHDB_COUNT;
+    }
+    if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_GETREGSET failed");
         return -1;
     }
     // Find the register that contains the breakpoint
     int i;
-    for (i = 0; i < ARM_DBREGS_COUNT; i++) {
+    for (i = 0; i < count; i++) {
         if (hwdebug.dbg_regs[i].addr == addr) {
             break;
         }
     }
-    if (i == ARM_DBREGS_COUNT) {
+    if (i == count) {
         perror("Breakpoint not found");
     }
     // Remove the breakpoint
     hwdebug.dbg_regs[i].addr = 0;
     hwdebug.dbg_regs[i].ctrl = 0;
-    if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    if (ptrace(PTRACE_SETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;
     }
@@ -199,14 +209,14 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
 
     // Reinstall the breakpoint
     
-    //if (ptrace(PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    //if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
     //    perror("PTRACE_GETREGSET2 failed");
     //    return -1;
     //}
 
     hwdebug.dbg_regs[i].addr = addr;
     hwdebug.dbg_regs[i].ctrl = control;
-    if (ptrace(PTRACE_SETREGSET, pid, NT_ARM_HW_BREAK, &iov) == -1) {
+    if (ptrace(PTRACE_SETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
         return -1;
     }

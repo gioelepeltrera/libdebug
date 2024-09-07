@@ -40,6 +40,7 @@ class PtraceHardwareBreakpointManager:
         self.setregset = setregset
         
         self.breakpoint_count = 0
+        self.watchpoint_count = 0
 
     def install_breakpoint(bp: Breakpoint):
         """Installs a hardware breakpoint at the provided location."""
@@ -51,4 +52,8 @@ class PtraceHardwareBreakpointManager:
 
     def available_breakpoints() -> int:
         """Returns the number of available hardware breakpoint registers."""
+        pass
+
+    def available_watchpoints() -> int:
+        """Returns the number of available hardware watchpoint registers."""
         pass
