@@ -330,6 +330,9 @@ class PtraceInterface(DebuggingInterface):
             if architecure == "x86_64":
                 self.continue_execution()
             elif architecure == "aarch64":
+                print("CONT_AFTER_BP")
+                print("BP: ", breakpoint.address)
+                
                 assert self.process_id is not None
                 ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
                 ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "R":1 ,"W": 2, "RW": 3}

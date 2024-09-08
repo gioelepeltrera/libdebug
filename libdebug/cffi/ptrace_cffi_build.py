@@ -167,6 +167,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
         iov.iov_len = 0x48;
         table = NT_ARM_HW_WATCH;
         count = ARM_WATCHDB_COUNT;
+        printf("______WATCHPOINT______");
     }
     if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_GETREGSET failed");
