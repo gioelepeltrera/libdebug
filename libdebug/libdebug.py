@@ -302,6 +302,7 @@ class Debugger:
                         breakpoint._callback(self, breakpoint)
                         self._empty_queue()
                     self._flush_and_cont_after_bp(breakpoint)
+                    return True
             self._flush_and_cont()
         print("End of _poll_and_run_on_process____")
         return True
