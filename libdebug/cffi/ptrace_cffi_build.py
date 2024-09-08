@@ -177,6 +177,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     // Find the register that contains the breakpoint
     int i;
     for (i = 0; i < count; i++) {
+        printf("_____%d--______ADDR: 0x%lx______", i, hwdebug.dbg_regs[i].addr);
         if (hwdebug.dbg_regs[i].addr == addr) {
             break;
         }
