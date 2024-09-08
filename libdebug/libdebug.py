@@ -266,7 +266,7 @@ class Debugger:
         self._poll_registers()
         print("In _poll_and_run_on_process")
         print("RIP:", hex(self.rip))
-        
+
 
         # TODO: this -1 is dependent on the architecture's instruction size and investigate this behavior
         # Sometimes the process stops at the instruction after the breakpoint
@@ -289,6 +289,7 @@ class Debugger:
             self._flush_and_cont_after_bp(breakpoint)
         else:
             liblog.debugger("Stopped at %x but no breakpoint set, continuing", self.rip)
+            print("Stopped at %x but no breakpoint set, continuing", self.rip)
             self._flush_and_cont()
         print("End of _poll_and_run_on_process____")
         return True
