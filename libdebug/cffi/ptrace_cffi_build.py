@@ -154,7 +154,7 @@ int ptrace_cont(int pid)
 int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
 {
     int condition = (control >> 3) & 0x3;
-
+    printf("_________Condition: %d___CONTAFTERBP_________", condition);
     //getregset, check the register, remove bp, singlestep, reinstate bp, cont
     struct user_hwdebug_state hwdebug;
     struct iovec iov = {
