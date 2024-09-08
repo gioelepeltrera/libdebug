@@ -170,6 +170,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     }
     if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_GETREGSET failed");
+        printf("__ptrace_getregset 1 failed__");
         return -1;
     }
     // Find the register that contains the breakpoint
@@ -181,17 +182,20 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     }
     if (i == count) {
         perror("Breakpoint not found");
+        printf("______BP_NOT_FOUND______");
     }
     // Remove the breakpoint
     hwdebug.dbg_regs[i].addr = 0;
     hwdebug.dbg_regs[i].ctrl = 0;
     if (ptrace(PTRACE_SETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
+        printf("__ptrace_setregset 1 failed__");
         return -1;
     }
     // Single-step the child
     if (ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL) == -1) {
         perror("PTRACE_SINGLESTEP failed");
+        printf("__ptrace_singlestep failed__");
         return -1;
     }
 
@@ -199,11 +203,13 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     int status;
     if (waitpid(pid, &status, 0) == -1) {
         perror("waitpid failed");
+        printf("__waitpid failed__");
         return -1;
     }
 
     // Ensure the process stopped due to the single-step and not something else
     if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
+        perror("_____-Unexpected signal received__");
         return -1;
     }
 
@@ -218,13 +224,16 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     hwdebug.dbg_regs[i].ctrl = control;
     if (ptrace(PTRACE_SETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_SETREGSET failed");
+        printf("__ptrace_setregset 2 failed__");
         return -1;
     }
     // Continue the child
     if (ptrace(PTRACE_CONT, pid, NULL, NULL) == -1) {
         perror("PTRACE_CONT failed");
+        printf("__ptrace_cont failed__");
         return -1;
     }
+    printf("_________CONT_AFTER_BP____ENDED_____");
     return 0;
 
 }
