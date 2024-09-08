@@ -291,7 +291,7 @@ class Debugger:
             liblog.debugger("Stopped at %x but no breakpoint set, continuing", self.rip)
             print("Stopped at %x but no breakpoint set, continuing", self.rip)
             print("Value in registers:")
-            regs = [self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8]
+            regs = [self.x0, self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8]
             for reg in regs:
                 print(hex(reg))
                 if reg in self.breakpoints:
