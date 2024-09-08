@@ -213,7 +213,8 @@ class Debugger:
             position = None
         
         address = self.interface.resolve_address(address)
-
+        if condition != "X":
+            address = address - address % 8
         breakpoint = Breakpoint(address, position, 0, hardware_assisted, callback, condition, length)
 
         self.breakpoints[address] = breakpoint
