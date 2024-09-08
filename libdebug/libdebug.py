@@ -290,6 +290,12 @@ class Debugger:
         else:
             liblog.debugger("Stopped at %x but no breakpoint set, continuing", self.rip)
             print("Stopped at %x but no breakpoint set, continuing", self.rip)
+            print("Value in registers:")
+            regs = [self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8]
+            for reg in regs:
+                print(hex(reg))
+                if reg in self.breakpoints:
+                    print("HEYYYYY Breakpoint set at", hex(reg))
             self._flush_and_cont()
         print("End of _poll_and_run_on_process____")
         return True
