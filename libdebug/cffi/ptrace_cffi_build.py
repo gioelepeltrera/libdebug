@@ -212,6 +212,7 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     // Ensure the process stopped due to the single-step and not something else
     if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGTRAP) {
         perror("_____-Unexpected signal received__");
+        printf("__unexpected signal received__");
         return -1;
     }
 
