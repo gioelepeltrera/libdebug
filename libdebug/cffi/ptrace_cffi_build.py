@@ -215,7 +215,9 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
         printf("__unexpected signal received__");
         return -1;
     }
-
+    if (condition != 0){
+        ptrace(PTRACE_CONT, pid, NULL, NULL);
+    }
     // Reinstall the breakpoint
     
     //if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
