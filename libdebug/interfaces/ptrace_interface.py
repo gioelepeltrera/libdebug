@@ -344,7 +344,7 @@ class PtraceInterface(DebuggingInterface):
                             enabled
                 result = self.lib_trace.ptrace_cont_after_hw_bp(
                     self.process_id,
-                    breakpoint.address,
+                    breakpoint.address-(breakpoint.address % 8),
                     control,
                 )
                 if result == -1:
