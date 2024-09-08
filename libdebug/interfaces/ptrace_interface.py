@@ -332,7 +332,7 @@ class PtraceInterface(DebuggingInterface):
             elif architecure == "aarch64":
                 assert self.process_id is not None
                 ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
-                ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "W": 2, "RW": 1}
+                ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "R":1 ,"W": 2, "RW": 3}
                 ARM_DBGREGS_CTRL_LEN_VAL = {1:1, 2:3, 3:7, 4:15, 5:31, 6:63, 7:127, 8:511} #ARM lengths (1 byte, 2 bytes, 3 bytes, 4 bytes, 5 bytes, 6 bytes, 7 bytes, 8 bytes)
                 enabled = 1
                 control = (ARM_DBGREGS_CTRL_LEN_VAL[breakpoint.length] << 5)        | \
