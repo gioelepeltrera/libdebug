@@ -342,9 +342,14 @@ class PtraceInterface(DebuggingInterface):
                             (ARM_DBGREGS_CTRL_COND_VAL[breakpoint.condition] << 3)  | \
                             (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1)                 | \
                             enabled
+                address = 0
+                if breakpoint.condition == "X":
+                    address = breakpoint.address
+                else:
+                    address = breakpoint.address-(breakpoint.address % 8)
                 result = self.lib_trace.ptrace_cont_after_hw_bp(
                     self.process_id,
-                    breakpoint.address-(breakpoint.address % 8),
+                    address,
                     control,
                 )
                 if result == -1:
