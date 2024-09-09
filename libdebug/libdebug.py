@@ -294,7 +294,7 @@ class Debugger:
             regs = [self.x0, self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8]
             for reg in regs:
                 print(hex(reg))
-                if reg in self.breakpoints:
+                if (reg- reg%8) in self.breakpoints:
                     print("HEYYYYY Breakpoint set at", hex(reg))
                     breakpoint = self.breakpoints[reg]
                     breakpoint.hit_count += 1
