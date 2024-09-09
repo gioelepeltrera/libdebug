@@ -295,14 +295,15 @@ class Debugger:
             for reg in regs:
                 print(hex(reg))
                 if reg in self.breakpoints:
-                    print("HEYYYYY Breakpoint set at", hex(reg))
-                    breakpoint = self.breakpoints[reg]
-                    breakpoint.hit_count += 1
+                    #print("HEYYYYY Breakpoint set at", hex(reg))
+                    #breakpoint = self.breakpoints[reg]
+                    #breakpoint.hit_count += 1
                     if breakpoint._callback:
                         breakpoint._callback(self, breakpoint)
                         self._empty_queue()
-                    #self.interface.continue_after_breakpoint(breakpoint)
-                    self._flush_and_cont_after_bp(breakpoint)
+                    ##self.interface.continue_after_breakpoint(breakpoint)
+                    #self._flush_and_cont_after_bp(breakpoint)
+                    self.interface.restore_breakpoint(self.breakpoints[reg])
                     return True
             self._flush_and_cont()
         print("End of _poll_and_run_on_process____")
