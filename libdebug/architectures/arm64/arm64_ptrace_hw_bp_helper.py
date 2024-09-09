@@ -181,6 +181,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             self.watchpoint_registers[free] = None
             liblog.debugger(f"Hardware watchpoint removed from register {free}.")
             self.watchpoint_count -= 1
+        print("End of remove_breakpoint")
 
     def available_breakpoints(self) -> int:
         """Returns the number of available hardware breakpoint registers."""
