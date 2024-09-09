@@ -435,8 +435,10 @@ class PtraceInterface(DebuggingInterface):
         """
         if breakpoint.hardware:
             self.hardware_bp_helper.remove_breakpoint(breakpoint)
+            self.wait_for_child()
             self.step_execution()
-            #self.continue_execution()
+            self.wait_for_child()
+            self.continue_execution()
         else:
             self._unset_sw_breakpoint(breakpoint.address)
 
