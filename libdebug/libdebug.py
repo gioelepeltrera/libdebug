@@ -301,8 +301,8 @@ class Debugger:
                     if breakpoint._callback:
                         breakpoint._callback(self, breakpoint)
                         self._empty_queue()
-                    self.interface.continue_after_breakpoint(breakpoint)
-                    #self._flush_and_cont_after_bp(breakpoint)
+                    #self.interface.continue_after_breakpoint(breakpoint)
+                    self._flush_and_cont_after_bp(breakpoint)
                     print("End of _poll_and_run_on_process RIP"+str(hex(self.rip))+"____")
                     return True
             self._flush_and_cont()
