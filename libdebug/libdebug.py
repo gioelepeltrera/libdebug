@@ -295,9 +295,9 @@ class Debugger:
             for reg in regs:
                 print(hex(reg))
                 if reg in self.breakpoints:
-                    #print("HEYYYYY Breakpoint set at", hex(reg))
-                    #breakpoint = self.breakpoints[reg]
-                    #breakpoint.hit_count += 1
+                    print("HEYYYYY Breakpoint set at", hex(reg))
+                    breakpoint = self.breakpoints[reg]
+                    breakpoint.hit_count += 1
                     if breakpoint._callback:
                         breakpoint._callback(self, breakpoint)
                         self._empty_queue()
