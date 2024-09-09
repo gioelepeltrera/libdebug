@@ -355,7 +355,7 @@ class PtraceInterface(DebuggingInterface):
                 if result == -1:
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
-
+                    
             return
         assert self.process_id is not None
         assert breakpoint.address in self.software_breakpoints
@@ -435,10 +435,6 @@ class PtraceInterface(DebuggingInterface):
         """
         if breakpoint.hardware:
             self.hardware_bp_helper.remove_breakpoint(breakpoint)
-            self.wait_for_child()
-            self.step_execution()
-            self.wait_for_child()
-            self.continue_execution()
         else:
             self._unset_sw_breakpoint(breakpoint.address)
 

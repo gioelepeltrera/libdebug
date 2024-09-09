@@ -216,11 +216,11 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
         return -1;
     }
     // Reinstall the breakpoint
-    
-    //if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
-    //    perror("PTRACE_GETREGSET2 failed");
-    //    return -1;
-    //}
+    //UNNECESSARY
+    if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
+        perror("PTRACE_GETREGSET2 failed");
+        return -1;
+    }
 
     hwdebug.dbg_regs[i].addr = addr;
     hwdebug.dbg_regs[i].ctrl = control;
