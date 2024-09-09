@@ -62,7 +62,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
 
     def install_breakpoint(self, bp: Breakpoint):
         """Installs a hardware breakpoint at the provided location."""
-        print("__INSTALL BREAKPOINT__")
         if bp.condition == "X":
             if self.breakpoint_count >= ARM_DBREGS_COUNT:
                 raise RuntimeError("No more hardware breakpoints available.")
@@ -91,7 +90,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             if free < 0:
                 raise RuntimeError("No more hardware watchpoints available.")
             else:
-                print("TRYING TO INSTALL WATCHPOINT")
                 liblog.debugger(f"Trying to install hardware watchpoint on register {free}.")
 
         # Write the breakpoint address in the register
@@ -100,7 +98,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         ctrl = (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) |\
               (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | \
                 (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1) | enabled
-        print("ctrl: "+str(ctrl))
         hw_dbg_state.dbg_regs[free].ctrl = ctrl
 
         if bp.condition == "X":
@@ -120,11 +117,9 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             self.breakpoint_count += 1
         else:
             self.watchpoint_registers[free] = bp
-            print("WATCHPOINT INSTALLED")
             liblog.debugger(f"Hardware watchpoint installed on register {free}.")
             self.watchpoint_count += 1
 
-        print("____GETREGSET__")
         self.getregset(NT_ARM_HW_BREAK if bp.condition == "X" else NT_ARM_HW_WATCH, hw_dbg_state, USER_HWDEBUG_STATE_LEN if bp.condition == "X" else USER_WATCH_STATE_LEN)
         print("____BP _DEBUG_After setting the register___")
 
@@ -148,7 +143,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         free = -1 
 
         for i in range(ARM_DBREGS_COUNT if bp.condition=="X" else ARM_WATCHDB_COUNT):
-            print(f"_____{i}--______ADDR: 0x{hw_dbg_state.dbg_regs[i].addr:x}______")
             if hw_dbg_state.dbg_regs[i].addr == bp.address:
                 free = i
         
@@ -181,7 +175,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             self.watchpoint_registers[free] = None
             liblog.debugger(f"Hardware watchpoint removed from register {free}.")
             self.watchpoint_count -= 1
-        print("End of remove_breakpoint")
 
     def available_breakpoints(self) -> int:
         """Returns the number of available hardware breakpoint registers."""
