@@ -296,7 +296,7 @@ class Debugger:
                 print(hex(reg))
                 if (reg- reg%8) in self.breakpoints:
                     print("HEYYYYY Breakpoint set at", hex(reg))
-                    breakpoint = self.breakpoints[reg]
+                    breakpoint = self.breakpoints[reg- reg%8]
                     breakpoint.hit_count += 1
                     if breakpoint._callback:
                         breakpoint._callback(self, breakpoint)
