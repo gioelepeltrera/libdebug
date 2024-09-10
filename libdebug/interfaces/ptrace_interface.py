@@ -35,6 +35,7 @@ from libdebug.utils.process_utils import (
     invalidate_process_cache,
     disable_self_aslr,
 )
+from libdebug.utils.arm_constants import *
 from libdebug.liblog import liblog
 import os
 import signal
@@ -331,9 +332,6 @@ class PtraceInterface(DebuggingInterface):
                 self.continue_execution()
             elif architecure == "aarch64":
                 assert self.process_id is not None
-                ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
-                ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "R":1 ,"W": 2, "RW": 3}
-                ARM_DBGREGS_CTRL_LEN_VAL = {1:1, 2:3, 3:7, 4:15, 5:31, 6:63, 7:127, 8:511} #ARM lengths (1 byte, 2 bytes, 3 bytes, 4 bytes, 5 bytes, 6 bytes, 7 bytes, 8 bytes)
                 enabled = 1
                 control = (ARM_DBGREGS_CTRL_LEN_VAL[breakpoint.length] << 5)        | \
                             (ARM_DBGREGS_CTRL_COND_VAL[breakpoint.condition] << 3)  | \
@@ -352,7 +350,8 @@ class PtraceInterface(DebuggingInterface):
                 if result == -1:
                     errno_val = self.ffi.errno
                     raise OSError(errno_val, errno.errorcode[errno_val])
-                    
+            else:
+                raise NotImplementedError(f"Architecture {architecure} does not supports hardware breakpoints")                    
             return
         assert self.process_id is not None
         assert breakpoint.address in self.software_breakpoints
@@ -371,7 +370,7 @@ class PtraceInterface(DebuggingInterface):
                 self.process_id,
                 breakpoint.address,
                 instruction,
-                (instruction & 0xFFFFFFFF00000000) | 0xD4200000,
+                (instruction & 0xFFFFFFFF00000000) | ARM_BRK_INSTRUCTION,
             )
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
@@ -398,7 +397,7 @@ class PtraceInterface(DebuggingInterface):
             self._poke_mem(address, (instruction & ((2**56 - 1) << 8)) | 0xCC)
         elif architecure == "aarch64":
             # Replace the instruction with the AArch64 BRK #0xF000 (encoded as 0xD4200000)
-            brk_instruction = (instruction & 0xFFFFFFFF00000000) | 0xD4200000
+            brk_instruction = (instruction & ((2**32 - 1) << 32)) | ARM_BRK_INSTRUCTION
             self._poke_mem(address, brk_instruction)
 
         else:

@@ -21,18 +21,8 @@ from libdebug.architectures.ptrace_hardware_breakpoint_manager import (
 from libdebug.data.breakpoint import Breakpoint
 from libdebug.liblog import liblog
 from libdebug.cffi._ptrace_cffi import ffi
+from libdebug.utils.arm_constants import *
 
-ARM_DBREGS_PRIV_LEVEL_VAL = {"EL0": 0, "EL1": 1, "EL2": 2, "EL3": 3}#EL0 is user mode, EL1 is kernel mode, EL2 is hypervisor mode, EL3 is secure monitor mode
-ARM_DBGREGS_CTRL_COND_VAL = {"X": 0, "R":1 ,"W": 2, "RW": 3}
-#ARM_DBGREGS_CTRL_LEN_VAL = {1: 0, 2: 1, 4: 3}  # ARM lengths (byte, halfword, word)
-ARM_DBGREGS_CTRL_LEN_VAL = {1:1, 2:3, 3:7, 4:15, 5:31, 6:63, 7:127, 8:511} #ARM lengths (1 byte, 2 bytes, 3 bytes, 4 bytes, 5 bytes, 6 bytes, 7 bytes, 8 bytes)
-ARM_DBREGS_COUNT = 6  # Adjust according to the specific ARM implementation
-ARM_WATCHDB_COUNT = 4 # Adjust according to the specific ARM implementation
-NT_ARM_HW_BREAK = 0x402
-NT_ARM_HW_WATCH = 0x403
-
-USER_HWDEBUG_STATE_LEN = 0x68
-USER_WATCH_STATE_LEN = 0x48
 class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
     """A hardware breakpoint manager for the ARM architecture.
 
@@ -95,8 +85,8 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         # Write the breakpoint address in the register
         hw_dbg_state.dbg_regs[free].addr = bp.address
         enabled = 1
-        ctrl = (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) |\
-              (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | \
+        ctrl =  (ARM_DBGREGS_CTRL_LEN_VAL[bp.length] << 5) |\
+                (ARM_DBGREGS_CTRL_COND_VAL[bp.condition] << 3) | \
                 (ARM_DBREGS_PRIV_LEVEL_VAL["EL0"] << 1) | enabled
         hw_dbg_state.dbg_regs[free].ctrl = ctrl
 
@@ -105,7 +95,6 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
         else:
             self.setregset(NT_ARM_HW_WATCH, hw_dbg_state, USER_WATCH_STATE_LEN)
 
-        #print all the registers
         if bp.condition == "X":
             self.getregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         else:
@@ -121,9 +110,8 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             self.watchpoint_count += 1
 
         self.getregset(NT_ARM_HW_BREAK if bp.condition == "X" else NT_ARM_HW_WATCH, hw_dbg_state, USER_HWDEBUG_STATE_LEN if bp.condition == "X" else USER_WATCH_STATE_LEN)
+        
         print("____BP _DEBUG_After setting the register___")
-
-        # Print addresses and control values in hexadecimal format
         for i in range(ARM_DBREGS_COUNT if bp.condition == "X" else ARM_WATCHDB_COUNT):
             print(f"{i} -- 0x{hw_dbg_state.dbg_regs[i].addr:x} -- ctrl: 0x{hw_dbg_state.dbg_regs[i].ctrl:x}")
 
@@ -165,8 +153,7 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             self.setregset(NT_ARM_HW_BREAK, hw_dbg_state, USER_HWDEBUG_STATE_LEN)
         else:
             self.setregset(NT_ARM_HW_WATCH, hw_dbg_state, USER_WATCH_STATE_LEN)
-        #print all the registers
-        # Remove the breakpoint
+
         if bp.condition == "X":
             self.breakpoint_registers[free] = None
             liblog.debugger(f"Hardware breakpoint removed from register {free}.")

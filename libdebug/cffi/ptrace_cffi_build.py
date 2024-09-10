@@ -64,15 +64,16 @@ ffibuilder.set_source(
     "libdebug.cffi._ptrace_cffi",
     """
 #ifdef __aarch64__
-
 #include <sys/uio.h>
 #include <asm/ptrace.h> // For the aarch64 register structure
 #include <elf.h> // Include the ELF header
 #endif
 #include <sys/ptrace.h>
 
-#define ARM_DBREGS_COUNT 6
-#define ARM_WATCHDB_COUNT 4 
+#define ARM_DBREGS_COUNT 6          // Adjust according to the specific ARM implementation
+#define ARM_WATCHDB_COUNT 4         // Adjust according to the specific ARM implementation
+#define USER_HWDEBUG_STATE_LEN 0x68 // Adjust according to the specific ARM implementation
+#define USER_WATCH_STATE_LEN 0x48   // Adjust according to the specific ARM implementation
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdint.h>
@@ -98,12 +99,6 @@ void ptrace_set_options(int pid)
     int options = PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT;
     ptrace(PTRACE_SETOPTIONS, pid, NULL, options);
 }
-
-
-
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-
 
 int ptrace_getregset(int pid, int type,  void *regs, int size)
 {    
@@ -142,10 +137,6 @@ int ptrace_setregs(int pid, void *regs)
 }
 #endif
 
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-
-
 int ptrace_cont(int pid)
 {   
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
@@ -158,12 +149,12 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
     struct user_hwdebug_state hwdebug;
     struct iovec iov = {
         .iov_base = &hwdebug,
-        .iov_len = 0x68
+        .iov_len = USER_HWDEBUG_STATE_LEN
     };
     unsigned int table = NT_ARM_HW_BREAK;
     int count  = ARM_DBREGS_COUNT;
     if (condition != 0){
-        iov.iov_len = 0x48;
+        iov.iov_len = USER_WATCH_STATE_LEN;
         table = NT_ARM_HW_WATCH;
         count = ARM_WATCHDB_COUNT;
     }
@@ -206,8 +197,8 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
         perror("_____-Unexpected signal received__");
         return -1;
     }
+
     // Reinstall the breakpoint
-    //UNNECESSARY
     if (ptrace(PTRACE_GETREGSET, pid, table, &iov) == -1) {
         perror("PTRACE_GETREGSET2 failed");
         return -1;

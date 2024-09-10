@@ -213,7 +213,7 @@ class Debugger:
             position = None
         
         address = self.interface.resolve_address(address)
-        if condition != "X":
+        if condition != "X" and platform.machine() == "aarch64":
             address = address - (address % 0x10)
         breakpoint = Breakpoint(address, position, 0, hardware_assisted, callback, condition, length)
 
@@ -223,7 +223,6 @@ class Debugger:
             (self.interface.set_breakpoint, [breakpoint])
         )
         #TODO REMOVE
-        #insert in print whether hw or sw
         if condition == "X":
             print("LIBDEBUG: Breakpoint set at", hex(address))
         else:
@@ -290,19 +289,22 @@ class Debugger:
 
             self._flush_and_cont_after_bp(breakpoint)
         else:
+            if platform.machine() == "aarch64":
+                liblog.debugger("Stopped at %x. Verifying no watchpoint has been hit", self.rip)
+
+                regs = [self.x0, self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8, self.x9, self.x10, self.x11, self.x12, self.x13, self.x14, self.x15, self.x16, self.x17, self.x18, self.x19, self.x20, self.x21, self.x22, self.x23, self.x24, self.x25, self.x26, self.x27, self.x28, self.x29, self.x30]
+                for reg in regs:
+                    if (reg- (reg%0x10)) in self.breakpoints:
+                        liblog.debugger("Watchpoint hit at %x", reg)
+                        breakpoint = self.breakpoints[reg- reg%0x10]
+                        breakpoint.hit_count += 1
+                        if breakpoint._callback:
+                            breakpoint._callback(self, breakpoint)
+                            self._empty_queue()
+                        
+                        self._flush_and_cont_after_bp(breakpoint)
+                        return True
             liblog.debugger("Stopped at %x but no breakpoint set, continuing", self.rip)
-            regs = [self.x0, self.x1, self.x2, self.x3, self.x4, self.x5, self.x6, self.x7, self.x8, self.x9, self.x10, self.x11, self.x12, self.x13, self.x14, self.x15, self.x16, self.x17, self.x18, self.x19, self.x20, self.x21, self.x22, self.x23, self.x24, self.x25, self.x26, self.x27, self.x28, self.x29, self.x30]
-            for reg in regs:
-                if (reg- (reg%0x10)) in self.breakpoints:
-                    print("Watchpoint hit at", hex(reg))
-                    breakpoint = self.breakpoints[reg- reg%0x10]
-                    breakpoint.hit_count += 1
-                    if breakpoint._callback:
-                        breakpoint._callback(self, breakpoint)
-                        self._empty_queue()
-                    
-                    self._flush_and_cont_after_bp(breakpoint)
-                    return True
             self._flush_and_cont()
         return True
     
