@@ -21,7 +21,7 @@ from libdebug import debugger
 
 class BacktraceTest(unittest.TestCase):
     def setUp(self):
-        self.d = debugger("backtrace_test")
+        self.d = debugger("arm_binaries/backtrace_test")
         self.exceptions = []
 
     def test_backtrace(self):

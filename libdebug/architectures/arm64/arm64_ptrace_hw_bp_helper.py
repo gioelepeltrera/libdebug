@@ -109,11 +109,11 @@ class Arm64PtraceHardwareBreakpointManager(PtraceHardwareBreakpointManager):
             liblog.debugger(f"Hardware watchpoint installed on register {free}.")
             self.watchpoint_count += 1
 
-        self.getregset(NT_ARM_HW_BREAK if bp.condition == "X" else NT_ARM_HW_WATCH, hw_dbg_state, USER_HWDEBUG_STATE_LEN if bp.condition == "X" else USER_WATCH_STATE_LEN)
-        
-        print("____BP _DEBUG_After setting the register___")
-        for i in range(ARM_DBREGS_COUNT if bp.condition == "X" else ARM_WATCHDB_COUNT):
-            print(f"{i} -- 0x{hw_dbg_state.dbg_regs[i].addr:x} -- ctrl: 0x{hw_dbg_state.dbg_regs[i].ctrl:x}")
+        #self.getregset(NT_ARM_HW_BREAK if bp.condition == "X" else NT_ARM_HW_WATCH, hw_dbg_state, USER_HWDEBUG_STATE_LEN if bp.condition == "X" else USER_WATCH_STATE_LEN)
+        #
+        #print("____BP _DEBUG_After setting the register___")
+        #for i in range(ARM_DBREGS_COUNT if bp.condition == "X" else ARM_WATCHDB_COUNT):
+        #    print(f"{i} -- 0x{hw_dbg_state.dbg_regs[i].addr:x} -- ctrl: 0x{hw_dbg_state.dbg_regs[i].ctrl:x}")
 
     
 

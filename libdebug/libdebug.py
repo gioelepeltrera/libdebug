@@ -222,11 +222,11 @@ class Debugger:
         self.polling_thread_command_queue.put(
             (self.interface.set_breakpoint, [breakpoint])
         )
-        #TODO REMOVE
-        if condition == "X":
-            print("LIBDEBUG: Breakpoint set at", hex(address))
-        else:
-            print("LIBDEBUG: Watchpoint set at", hex(address))
+        ##TODO REMOVE
+        #if condition == "X":
+        #    print("LIBDEBUG: Breakpoint set at", hex(address))
+        #else:
+        #    print("LIBDEBUG: Watchpoint set at", hex(address))
 
     def jump(self, location: int | bytes):
         """Jumps to the specified location.
