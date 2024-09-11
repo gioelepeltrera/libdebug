@@ -303,6 +303,7 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     status = ptrace(PTRACE_POKETEXT, pid, (void*) addr, prev_data);
 
     if (status == -1) {
+    printf("__PTRACE_POKETEXT failed__");
         return status;
     }
 
@@ -310,6 +311,7 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     status = ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
 
     if (status == -1) {
+    printf("__PTRACE_SINGLESTEP failed__");
         return status;
     }
     // wait for the child
@@ -318,10 +320,15 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     status = ptrace(PTRACE_POKETEXT, pid, (void*) addr, data);
 
     if (status == -1) {
+    printf("__PTRACE_POKETEXT failed__");
         return status;
     }
     // continue the execution
     status = ptrace(PTRACE_CONT, pid, NULL, NULL);
+    if (status == -1) {
+    printf("__PTRACE_CONT failed__");
+        return status;
+    }
     return status;
 #endif
 }
