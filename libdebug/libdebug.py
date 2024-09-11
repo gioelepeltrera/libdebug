@@ -267,15 +267,15 @@ class Debugger:
 
         self.running = False
         self._poll_registers()
-
-        if platform.machine() == "riscv":
-            address = self.x0
         # TODO: this -1 is dependent on the architecture's instruction size and investigate this behavior
         # Sometimes the process stops at the instruction after the breakpoint
         if self.rip not in self.breakpoints and (self.rip - 1) in self.breakpoints:
             address = self.rip - 1
         else:
             address = self.rip
+
+        if platform.machine() == "riscv" and address not in self.breakpoints:
+            address = self.x0
 
         if address in self.breakpoints:
             breakpoint = self.breakpoints[address]
