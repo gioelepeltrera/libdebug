@@ -272,6 +272,10 @@ class Debugger:
         for i in range(31):
             print(f"x{i} = {hex(getattr(self, f'x{i}'))}")
         print("--------------------")
+        print("Breakpoints:")
+        for address, bp in self.breakpoints.items():
+            print(f"0x{address:x}")
+        print("--------------------")
         # TODO: this -1 is dependent on the architecture's instruction size and investigate this behavior
         # Sometimes the process stops at the instruction after the breakpoint
         if self.rip not in self.breakpoints and (self.rip - 1) in self.breakpoints:
