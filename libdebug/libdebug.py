@@ -274,14 +274,13 @@ class Debugger:
         else:
             address = self.rip
 
-        if platform.machine() == "riscv":
+        if platform.machine() == "riscv64":
             address = self.x0
         #print regs
         print("_______LIBDEBUG: Stopped at", hex(address))
         for i in range(32):
             print("x" + str(i), hex(getattr(self, "x" + str(i))))
         print("pc", hex(self.pc))
-        print("sp", hex(self.sp))
         print("-----------------")
 
         if address in self.breakpoints:
