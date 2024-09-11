@@ -247,7 +247,7 @@ class PtraceInterface(DebuggingInterface):
                 buffer = self.ffi.unpack(register_file, 512)
                 return register_holder_provider(buffer, ptrace_setter=self._set_registers)
         elif architecure == "riscv64":  # Adding support for RISC-V
-            SIZE = 0x100  # Adjust this size according to the RISC-V register set size
+            SIZE = 0x110  # Adjust this size according to the RISC-V register set size
             result = self.lib_trace.ptrace_getregset(self.process_id, NT_PRSTATUS, register_file, SIZE)
             if result == -1:
                 errno_val = self.ffi.errno
@@ -390,6 +390,7 @@ class PtraceInterface(DebuggingInterface):
                 (instruction & 0xFFFFFFFF00000000) | ARM_BRK_INSTRUCTION,
             )
         elif architecure == "riscv64":
+            print("RISC-V: Continue after a software breakpoint by restoring the original instruction")
             # RISC-V: Continue after a software breakpoint by restoring the original instruction
             result = self.lib_trace.cont_after_bp(
                 self.process_id,
@@ -428,6 +429,7 @@ class PtraceInterface(DebuggingInterface):
             # Replace the instruction with the RISC-V EBREAK instruction (0x00100073)
             ebreak_instruction = (instruction & ~0xFFFFFFFF) | 0x00100073
             self._poke_mem(address, ebreak_instruction)
+            print("RISC-V: Set a software breakpoint by replacing the instruction with EBREAK")
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 

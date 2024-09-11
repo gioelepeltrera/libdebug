@@ -218,7 +218,7 @@ class Debugger:
         breakpoint = Breakpoint(address, position, 0, hardware_assisted, callback, condition, length)
 
         self.breakpoints[address] = breakpoint
-
+        print("LIBDEBUG: Breakpoint set at", hex(address))
         self.polling_thread_command_queue.put(
             (self.interface.set_breakpoint, [breakpoint])
         )
