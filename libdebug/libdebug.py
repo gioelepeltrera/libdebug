@@ -268,7 +268,7 @@ class Debugger:
         self.running = False
         self._poll_registers()
 
-
+        print("LIBDEBUG: Stopped at", hex(self.rip))
         # TODO: this -1 is dependent on the architecture's instruction size and investigate this behavior
         # Sometimes the process stops at the instruction after the breakpoint
         if self.rip not in self.breakpoints and (self.rip - 1) in self.breakpoints:
