@@ -71,8 +71,9 @@ ffibuilder.set_source(
 
 #ifdef __riscv
 #include <sys/uio.h>
-#include <asm/ptrace.h> // For the RISC-V register structure (should be available in riscv64 headers)
-#include <elf.h>        // Include the ELF header
+#include <riscv64-linux-gnu/asm/ptrace.h>  // For the RISC-V register structure
+#include <riscv64-linux-gnu/sys/ptrace.h>  // For system calls with ptrace
+#include <elf.h>     
 #endif
 
 #include <sys/ptrace.h>
