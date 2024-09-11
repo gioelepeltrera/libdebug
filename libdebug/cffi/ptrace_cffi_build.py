@@ -152,6 +152,7 @@ int ptrace_cont(int pid)
 
 int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
 {
+#ifdef __aarch64__
     int condition = (control >> 3) & 0x3;
     //getregset, check the register, remove bp, singlestep, reinstate bp, cont
     struct user_hwdebug_state hwdebug;
@@ -224,7 +225,9 @@ int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control)
         return -1;
     }
     return 0;
-
+#else
+    return -1;
+#endif
 }
 
 int ptrace_singlestep(int pid)
