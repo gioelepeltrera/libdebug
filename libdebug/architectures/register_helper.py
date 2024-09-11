@@ -40,8 +40,6 @@ def register_holder_provider(
         case "aarch64":
             return Arm64PtraceRegisterHolder(register_file, ptrace_setter)
         case "riscv64":
-            print("RISCV register holder")
             return RiscVPtraceRegisterHolder(register_file, ptrace_setter)
         case _:
-            print(architecture.machine())
             raise NotImplementedError(f"Architecture {architecture} not available.")
