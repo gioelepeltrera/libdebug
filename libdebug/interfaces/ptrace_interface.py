@@ -428,7 +428,7 @@ class PtraceInterface(DebuggingInterface):
         elif architecure == "riscv64":
             # Replace the instruction with the RISC-V EBREAK instruction (0x00100073)
             ebreak_instruction = (instruction & ~0xFFFFFFFF) | 0x00100073
-            self._poke_mem(address, ebreak_instruction)
+            self._poke_text(address, ebreak_instruction)
             print("RISC-V: Set a software breakpoint by replacing the instruction with EBREAK")
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
@@ -499,6 +499,30 @@ class PtraceInterface(DebuggingInterface):
         error = self.ffi.errno
         if error == errno.EIO:
             raise OSError(error, errno.errorcode[error])
+
+    def _poke_text(self, address: int, value: int):
+        """Writes the memory at the specified address."""
+        assert self.process_id is not None
+
+        result = self.lib_trace.ptrace_poketext(self.process_id, address, value)
+        liblog.debugger("POKETEXT at address %d returned with result %d", address, result)
+
+        error = self.ffi.errno
+        if error == errno.EIO:
+            raise OSError(error, errno.errorcode[error])
+    
+    def _peek_text(self, address: int) -> int:
+        """Reads the memory at the specified address."""
+        assert self.process_id is not None
+
+        result = self.lib_trace.ptrace_peektext(self.process_id, address)
+        liblog.debugger("PEEKTEXT at address %d returned with result %x", address, result)
+
+        error = self.ffi.errno
+        if error == errno.EIO:
+            raise OSError(error, errno.errorcode[error])
+
+        return result
 
     def _peek_user(self, address: int) -> int:
         """Reads the memory at the specified address."""

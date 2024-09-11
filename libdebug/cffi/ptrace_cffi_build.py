@@ -39,7 +39,8 @@ ffibuilder.cdef(
     uint64_t ptrace_pokedata(int pid, uint64_t addr, uint64_t data);
     uint64_t ptrace_peekuser(int pid, uint64_t addr);
     uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data);
-
+    uint64_t ptrace_peektext(int pid, uint64_t addr);
+    uint64_t ptrace_poketext(int pid, uint64_t addr, uint64_t data);
 
     int ptrace_cont_after_hw_bp(int pid, uint64_t addr, uint32_t control);
     int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data);
@@ -244,6 +245,16 @@ uint64_t ptrace_peekdata(int pid, uint64_t addr)
 uint64_t ptrace_pokedata(int pid, uint64_t addr, uint64_t data)
 {
     return ptrace(PTRACE_POKEDATA, pid, (void*) addr, data);
+}
+
+uint64_t ptrace_peektext(int pid, uint64_t addr)
+{
+    return ptrace(PTRACE_PEEKTEXT, pid, (void*) addr, NULL);
+}
+
+uint64_t ptrace_poketext(int pid, uint64_t addr, uint64_t data)
+{
+    return ptrace(PTRACE_POKETEXT, pid, (void*) addr, data);
 }
 
 uint64_t ptrace_peekuser(int pid, uint64_t addr)
