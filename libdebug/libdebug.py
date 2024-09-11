@@ -274,7 +274,7 @@ class Debugger:
         else:
             address = self.rip
 
-        if platform.machine() == "riscv" and address not in self.breakpoints:
+        if platform.machine() == "riscv":
             address = self.x0
         #print regs
         print("_______LIBDEBUG: Stopped at", hex(address))
