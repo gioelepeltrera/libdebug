@@ -306,7 +306,7 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     printf("__PTRACE_POKETEXT failed__");
         return status;
     }
-
+/*SINGLESTEP not currently supported for RISC-V
     // step over the breakpoint
     status = ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
 
@@ -323,6 +323,7 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     printf("__PTRACE_POKETEXT failed__");
         return status;
     }
+*/
     // continue the execution
     status = ptrace(PTRACE_CONT, pid, NULL, NULL);
     if (status == -1) {
