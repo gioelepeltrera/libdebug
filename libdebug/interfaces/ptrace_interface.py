@@ -392,6 +392,7 @@ class PtraceInterface(DebuggingInterface):
         elif architecure == "riscv64":
             print("RISC-V: Continue after a software breakpoint by restoring the original instruction")
             # RISC-V: Continue after a software breakpoint by restoring the original instruction
+            print("Original instruction at address %d: %x" % (breakpoint.address, instruction))
             result = self.lib_trace.cont_after_bp(
                 self.process_id,
                 breakpoint.address,
