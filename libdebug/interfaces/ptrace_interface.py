@@ -396,7 +396,7 @@ class PtraceInterface(DebuggingInterface):
                 self.process_id,
                 breakpoint.address,
                 instruction,
-                (instruction & ~0xFFFFFFFF) | 0x00100073,  # EBREAK instruction for RISC-V
+                (instruction & 0xFFFFFFFF00000000) | 0x00100073,  # EBREAK instruction for RISC-V
             )
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
