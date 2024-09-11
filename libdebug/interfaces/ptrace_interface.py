@@ -416,6 +416,7 @@ class PtraceInterface(DebuggingInterface):
         assert self.process_id is not None
         if platform.machine() == "riscv64":
             instruction = self._peek_text(address)
+            print("Original instruction at address %d: %x" % (address, instruction))
         else:
             instruction = self._peek_mem(address)
         self.software_breakpoints[address] = instruction
@@ -432,6 +433,9 @@ class PtraceInterface(DebuggingInterface):
             # Replace the instruction with the RISC-V EBREAK instruction (0x00100073)
             ebreak_instruction = (instruction & ~0xFFFFFFFF) | 0x00100073
             self._poke_text(address, ebreak_instruction)
+
+            post = self._peek_text(address)
+            print("Post-breakpoint instruction at address %d: %x" % (address, post))
             print("RISC-V: Set a software breakpoint by replacing the instruction with EBREAK")
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
