@@ -68,6 +68,13 @@ ffibuilder.set_source(
 #include <asm/ptrace.h> // For the aarch64 register structure
 #include <elf.h> // Include the ELF header
 #endif
+
+#ifdef __riscv
+#include <sys/uio.h>
+#include <asm/ptrace.h> // For the RISC-V register structure (should be available in riscv64 headers)
+#include <elf.h>        // Include the ELF header
+#endif
+
 #include <sys/ptrace.h>
 
 #define ARM_DBREGS_COUNT 6          // Adjust according to the specific ARM implementation
