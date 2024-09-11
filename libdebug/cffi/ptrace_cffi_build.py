@@ -46,8 +46,10 @@ ffibuilder.cdef(
 """
 )
 
+
 ffibuilder.cdef(
     """
+    #ifdef __aarch64__
     struct user_hwdebug_state {
         unsigned int dbg_info;
         unsigned int pad;
@@ -57,6 +59,15 @@ ffibuilder.cdef(
             unsigned int pad;
         } dbg_regs[...];
     };
+    #else
+    struct user_hwdebug_state {
+        unsigned int dbg_info;
+        struct {
+            unsigned long addr;
+            unsigned int ctrl;
+        } dbg_regs[6];
+    };
+    #endif
 """
 )
 
