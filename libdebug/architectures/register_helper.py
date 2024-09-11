@@ -22,6 +22,9 @@ from libdebug.architectures.amd64.amd64_ptrace_register_holder import (
 from libdebug.architectures.arm64.arm64_ptrace_register_holder import (
     Arm64PtraceRegisterHolder,
 )
+from libdebug.architectures.riscv.riscv_ptrace_register_holder import (
+    RiscVPtraceRegisterHolder,
+)
 from typing import Callable
 import platform
 
@@ -36,5 +39,7 @@ def register_holder_provider(
             return Amd64PtraceRegisterHolder(register_file, ptrace_setter)
         case "aarch64":
             return Arm64PtraceRegisterHolder(register_file, ptrace_setter)
+        case "riscv64":
+            return RiscVPtraceRegisterHolder(register_file, ptrace_setter)
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")

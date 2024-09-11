@@ -23,6 +23,9 @@ from libdebug.architectures.amd64.amd64_stack_unwinding import (
 from libdebug.architectures.arm64.arm64_stack_unwinding import (
     Arm64StackUnwinding,
 )
+from libdebug.architectures.riscv.riscv_stack_unwinding import (
+    RiscVStackUnwinding,
+)
 import platform
 
 def stack_unwinding_provider(architecture: str = platform.machine()) -> StackUnwindingManager:
@@ -32,5 +35,7 @@ def stack_unwinding_provider(architecture: str = platform.machine()) -> StackUnw
             return Amd64StackUnwinding()
         case "aarch64":
             return Arm64StackUnwinding()
+        case "riscv64":
+            return RiscVStackUnwinding()
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")

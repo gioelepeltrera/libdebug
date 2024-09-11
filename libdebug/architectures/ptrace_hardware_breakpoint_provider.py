@@ -24,6 +24,9 @@ from libdebug.architectures.amd64.amd64_ptrace_hw_bp_helper import (
 from libdebug.architectures.arm64.arm64_ptrace_hw_bp_helper import (
     Arm64PtraceHardwareBreakpointManager,
 )
+from libdebug.architectures.riscv.riscv_ptrace_hw_bp_helper import (
+    RiscvPtraceHardwareBreakpointManager,
+)
 from typing import Callable
 import platform
 
@@ -43,5 +46,7 @@ def ptrace_hardware_breakpoint_manager_provider(
             return Amd64PtraceHardwareBreakpointManager(peek_mem, poke_mem)
         case "aarch64":
             return Arm64PtraceHardwareBreakpointManager(getregset, setregset)
+        case "riscv64":
+            return RiscvPtraceHardwareBreakpointManager(getregset, setregset)
         case _:
             raise NotImplementedError(f"Architecture {architecture} not available.")
