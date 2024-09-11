@@ -246,6 +246,16 @@ class PtraceInterface(DebuggingInterface):
             else:
                 buffer = self.ffi.unpack(register_file, 512)
                 return register_holder_provider(buffer, ptrace_setter=self._set_registers)
+        elif architecure == "riscv64":  # Adding support for RISC-V
+            SIZE = 0x100  # Adjust this size according to the RISC-V register set size
+            result = self.lib_trace.ptrace_getregset(self.process_id, NT_PRSTATUS, register_file, SIZE)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+            else:
+                buffer = self.ffi.unpack(register_file, 512)  # Adjust size if needed
+                return register_holder_provider(buffer, ptrace_setter=self._set_registers)
+
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
         
@@ -266,6 +276,13 @@ class PtraceInterface(DebuggingInterface):
             if result == -1:
                 errno_val = self.ffi.errno
                 raise OSError(errno_val, errno.errorcode[errno_val])
+        elif architecure == "riscv64":  # Adding support for RISC-V
+            SIZE = 0x100  # Adjust this size according to the RISC-V register set size
+            result = self.lib_trace.ptrace_setregset(self.process_id, NT_PRSTATUS, register_file, SIZE)
+            if result == -1:
+                errno_val = self.ffi.errno
+                raise OSError(errno_val, errno.errorcode[errno_val])
+        
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 
