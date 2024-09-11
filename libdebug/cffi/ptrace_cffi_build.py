@@ -16,7 +16,7 @@
 #
 
 from cffi import FFI
-
+import platform
 ffibuilder = FFI()
 ffibuilder.cdef(
     """
@@ -46,30 +46,20 @@ ffibuilder.cdef(
 """
 )
 
-
-ffibuilder.cdef(
-    """
-    #ifdef __aarch64__
-    struct user_hwdebug_state {
-        unsigned int dbg_info;
-        unsigned int pad;
-        struct {
-            unsigned long addr;
-            unsigned int ctrl;
+if platform.machine() == "aarch64":
+    ffibuilder.cdef(
+        """
+        struct user_hwdebug_state {
+            unsigned int dbg_info;
             unsigned int pad;
-        } dbg_regs[...];
-    };
-    #else
-    struct user_hwdebug_state {
-        unsigned int dbg_info;
-        struct {
-            unsigned long addr;
-            unsigned int ctrl;
-        } dbg_regs[6];
-    };
-    #endif
-"""
-)
+            struct {
+                unsigned long addr;
+                unsigned int ctrl;
+                unsigned int pad;
+            } dbg_regs[...];
+        };
+    """
+    )
 
 ffibuilder.set_source(
     "libdebug.cffi._ptrace_cffi",
