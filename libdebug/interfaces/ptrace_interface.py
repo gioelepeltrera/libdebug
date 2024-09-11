@@ -372,6 +372,14 @@ class PtraceInterface(DebuggingInterface):
                 instruction,
                 (instruction & 0xFFFFFFFF00000000) | ARM_BRK_INSTRUCTION,
             )
+        elif architecure == "riscv64":
+            # RISC-V: Continue after a software breakpoint by restoring the original instruction
+            result = self.lib_trace.cont_after_bp(
+                self.process_id,
+                breakpoint.address,
+                instruction,
+                (instruction & ~0xFFFFFFFF) | 0x00100073,  # EBREAK instruction for RISC-V
+            )
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 
@@ -399,7 +407,10 @@ class PtraceInterface(DebuggingInterface):
             # Replace the instruction with the AArch64 BRK #0xF000 (encoded as 0xD4200000)
             brk_instruction = (instruction & ((2**32 - 1) << 32)) | ARM_BRK_INSTRUCTION
             self._poke_mem(address, brk_instruction)
-
+        elif architecure == "riscv64":
+            # Replace the instruction with the RISC-V EBREAK instruction (0x00100073)
+            ebreak_instruction = (instruction & ~0xFFFFFFFF) | 0x00100073
+            self._poke_mem(address, ebreak_instruction)
         else:
             raise NotImplementedError(f"Architecture {architecure} not supported")
 
