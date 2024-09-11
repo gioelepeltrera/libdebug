@@ -414,7 +414,10 @@ class PtraceInterface(DebuggingInterface):
             address (int): The address where the breakpoint should be set.
         """
         assert self.process_id is not None
-        instruction = self._peek_mem(address)
+        if platform.machine() == "riscv64":
+            instruction = self._peek_text(address)
+        else:
+            instruction = self._peek_mem(address)
         self.software_breakpoints[address] = instruction
 
         architecure = platform.machine()

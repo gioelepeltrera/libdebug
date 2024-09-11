@@ -271,6 +271,7 @@ uint64_t ptrace_pokeuser(int pid, uint64_t addr, uint64_t data)
 //TODO CONTINUE AFTER SOFTWARE BREAKPOINT
 int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
 {
+#ifndef __riscv
     int status;
     // restore the previous instruction
     status = ptrace(PTRACE_POKEDATA, pid, (void*) addr, prev_data);
@@ -296,6 +297,33 @@ int cont_after_bp(int pid, uint64_t addr, uint64_t prev_data, uint64_t data)
     // continue the execution
     status = ptrace(PTRACE_CONT, pid, NULL, NULL);
     return status;
+#else
+    int status;
+    // restore the previous instruction
+    status = ptrace(PTRACE_POKETEXT, pid, (void*) addr, prev_data);
+
+    if (status == -1) {
+        return status;
+    }
+
+    // step over the breakpoint
+    status = ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+
+    if (status == -1) {
+        return status;
+    }
+    // wait for the child
+    waitpid(pid, &status, 1 << 30);
+
+    status = ptrace(PTRACE_POKETEXT, pid, (void*) addr, data);
+
+    if (status == -1) {
+        return status;
+    }
+    // continue the execution
+    status = ptrace(PTRACE_CONT, pid, NULL, NULL);
+    return status;
+#endif
 }
 """,
     libraries=[],
