@@ -32,31 +32,32 @@ class RiscVStackUnwinding():
             list: A list of return addresses (stack trace).
         """
 
-        # Start with the current program counter (pc), which holds the current instruction pointer
+        # Start with the current program counter (pc)
         stack_trace = [target.pc]
-        
-        # Add the return address from the ra (x1) register, if valid
+
+        # Add the return address from the ra (x1) register
         ra = target.ra if target.ra else None
 
-        # Use the stack pointer (sp) to unwind through the stack frames
-        current_sp = target.rsp
+        # Use the frame pointer (s0) or stack pointer (sp) to unwind through the stack frames
+        current_fp = target.s0  # Frame pointer (s0 in RISC-V)
         temp_stack = []
-        while current_sp:
+
+        while current_fp:
             try:
-                # Read the return address from the stack (stored at current_sp)
-                return_address = int.from_bytes(target.memory[current_sp, 8], byteorder="little")
+                # Read the return address from the stack frame
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
                 # Append the return address to the temporary stack
                 temp_stack.append(return_address)
 
-                # Read the next stack pointer (previous frame pointer) from the current stack pointer
-                current_sp = int.from_bytes(target.memory[current_sp + 8, 8], byteorder="little")
-                
+                # Move to the next frame pointer (s0)
+                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+
             except OSError:
                 # Stop unwinding if memory access fails
                 break
 
-        # Include the return address from the `ra` register if it's not in the temporary stack
+        # Include the return address from the `ra` register if it's not already in the stack
         if ra not in temp_stack:
             stack_trace = stack_trace + [ra] + temp_stack
         else:
