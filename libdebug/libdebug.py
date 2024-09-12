@@ -285,7 +285,7 @@ class Debugger:
 
             self._flush_and_cont_after_bp(breakpoint)
             if platform.machine() == "riscv64":
-                self.breakpoints.pop(self.x0)
+                self.breakpoints.pop(address)
             
         else:
             if platform.machine() == "aarch64":
