@@ -39,7 +39,7 @@ class RiscVStackUnwinding():
         ra = target.ra if target.ra else None
 
         # Use the stack pointer (sp) to unwind through the stack frames
-        current_sp = target.sp
+        current_sp = target.rsp
         temp_stack = []
         while current_sp:
             try:
