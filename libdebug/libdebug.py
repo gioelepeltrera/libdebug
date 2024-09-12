@@ -222,11 +222,6 @@ class Debugger:
         self.polling_thread_command_queue.put(
             (self.interface.set_breakpoint, [breakpoint])
         )
-        ##TODO REMOVE
-        #if condition == "X":
-        #    print("LIBDEBUG: Breakpoint set at", hex(address))
-        #else:
-        #    print("LIBDEBUG: Watchpoint set at", hex(address))
 
     def jump(self, location: int | bytes):
         """Jumps to the specified location.
@@ -276,12 +271,6 @@ class Debugger:
 
         if platform.machine() == "riscv64":
             address = self.x0
-        #print regs
-        print("_______LIBDEBUG: Stopped at", hex(address))
-        for i in range(32):
-            print("x" + str(i), hex(getattr(self, "x" + str(i))))
-        print("pc", hex(self.pc))
-        print("-----------------")
 
         if address in self.breakpoints:
             breakpoint = self.breakpoints[address]
@@ -295,6 +284,9 @@ class Debugger:
                 self._empty_queue()
 
             self._flush_and_cont_after_bp(breakpoint)
+            if platform.machine() == "riscv64":
+                self.breakpoints.pop(self.x0)
+            
         else:
             if platform.machine() == "aarch64":
                 liblog.debugger("Stopped at %x. Verifying no watchpoint has been hit", self.rip)
