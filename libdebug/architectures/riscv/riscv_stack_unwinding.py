@@ -43,7 +43,7 @@ class RiscVStackUnwinding():
         temp_stack_fp = []
         
         # Stack pointer (sp, x2) based unwinding
-        current_sp = target.x2
+        current_sp = target.x27
         temp_stack_sp = []
 
         # Print registers for debugging
