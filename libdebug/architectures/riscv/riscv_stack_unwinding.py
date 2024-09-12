@@ -42,9 +42,12 @@ class RiscVStackUnwinding():
         current_fp = target.x8  # Frame pointer (s0 in RISC-V)
         temp_stack = []
         print("Registers: ")
-        #print index + value in hex
-        for index, value in target.registers.items():
-            print(index, hex(value))
+        #print index + value in hex get attributes x0,x1, ...
+        for i in range(32):
+            print(f"x{i}: {target.__getattribute__('x'+str(i)):x}")
+        print(f"pc: {target.pc:x}")
+        print(f"ra: {ra:x}")
+        
         while current_fp:
             try:
                 # Read the return address from the stack frame
