@@ -270,6 +270,9 @@ class Debugger:
             address = self.rip
 
         if platform.machine() == "riscv64":
+            print("BP HIT RISCV")
+            print("X0: ",hex(self.x0))
+            print("PC: ",hex(self.pc))
             address = self.x0
 
         if address in self.breakpoints:
