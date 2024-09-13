@@ -15,6 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import platform
 
 def get_reg_64(dict: dict, name: str) -> int:
     return dict[name]
@@ -41,7 +42,11 @@ def set_reg_64(dict: dict, name: str, value: int):
 
 
 def set_reg_32(dict: dict, name: str, value: int):
-    dict[name] = (dict[name] & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF)
+    if platform.machine() == "aaarch64":
+        dict[name] = (dict[name] & 0x0000000000000000) | (value & 0xFFFFFFFF)
+
+    else:
+        dict[name] = (dict[name] & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF)
 
 
 def set_reg_16(dict: dict, name: str, value: int):
