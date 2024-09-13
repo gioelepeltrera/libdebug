@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+
 class RiscVStackUnwinding():
     """
     Class that provides stack unwinding for the RISC-V architecture.
@@ -78,9 +79,10 @@ class RiscVStackUnwinding():
             try:
                 for offset in range(0, 128, 8):  # Adjust the range if needed
                     potential_return_addr = int.from_bytes(target.memory[current_sp + offset, 8], byteorder="little")
-                    if self.is_valid_return_address(potential_return_addr, target):
-                        stack_trace.append(potential_return_addr)
-                        print(f"Potential return address found at (sp + {offset}): {potential_return_addr:x}")
+
+                    # Just append any address we find (without validation for now)
+                    stack_trace.append(potential_return_addr)
+                    print(f"Potential return address found at (sp + {offset}): {potential_return_addr:x}")
 
                 # Move up the stack
                 current_sp += 128  # Adjust step size as needed
@@ -90,16 +92,3 @@ class RiscVStackUnwinding():
                 break
 
         return stack_trace
-
-    def is_valid_return_address(self, address, target):
-        """
-        Check if the address is within the known function code section.
-        Args:
-            address (int): The address to validate.
-            target (Debugger): The target debugger instance.
-        Returns:
-            bool: True if valid, False otherwise.
-        """
-        # Placeholder for a real check, e.g., checking against known function boundaries
-        # For example, we could verify that the address lies within the text/code section
-        return address in target.valid_function_addresses
