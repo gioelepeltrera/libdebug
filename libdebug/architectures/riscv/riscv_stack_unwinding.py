@@ -15,7 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-class RiscVStackUnwinding():
+class RiscVStackUnwinding:
     """
     Class that provides stack unwinding for the RISC-V architecture.
     """
@@ -31,64 +31,54 @@ class RiscVStackUnwinding():
             list: A list of return addresses (stack trace).
         """
 
-        # Start with the current program counter (pc)
+        # Initialize stack trace with the current program counter (PC)
         stack_trace = [target.pc]
-        ra = target.ra if target.ra else None
+        current_ra = target.ra if target.ra else None
+        current_fp = target.x8  # Frame pointer (s0/x8)
+        current_sp = target.sp  # Stack pointer (sp)
 
-        current_fp = target.x8
-        current_sp = target.sp
+        print(f"Starting unwinding:\nPC: {target.pc:x}, FP (s0/x8): {current_fp:x}, SP: {current_sp:x}, RA: {current_ra:x}")
 
-        temp_stack = []
-
-        # Print registers for debugging
-        print(f"PC: {target.pc:x}")
-        print(f"FP (s0/x8): {current_fp:x}")
-        print(f"SP: {current_sp:x}")
-        print(f"RA: {ra:x}")
-
-        # Unwind using frame pointer (s0, x8)
+        # Attempt stack unwinding using the frame pointer (s0/x8)
         while current_fp:
             try:
-                print(f"Current FP: {current_fp:x}")
-
-                # Attempt to read the return address from the current frame
-                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+                # Read the return address from the current frame (FP + 8)
+                ra = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
                 next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
-                # Add the return address to the temporary stack
-                temp_stack.append(return_address)
-
-                # Print more values for debugging
-                for offset in range(16, 64, 8):
-                    value_at_fp = int.from_bytes(target.memory[current_fp + offset, 8], byteorder="little")
-                    print(f"Value at (fp + {offset}): {value_at_fp:x}")
+                # Append return address to stack trace
+                stack_trace.append(ra)
+                print(f"Unwound function: RA={ra:x}, FP={current_fp:x}, Next FP={next_fp:x}")
 
                 # Move to the next frame
                 current_fp = next_fp
 
             except OSError:
-                print("Error reading memory while unwinding stack.")
+                print("Error reading memory at FP; manual stack scanning will be attempted.")
                 break
 
-        # Manual scanning of the stack if unwinding via frame pointer fails
+        # If frame-pointer-based unwinding failed, manually scan the stack for return addresses
         print("\nManual stack scanning for return addresses:")
-        if ra and ra not in temp_stack:
-            stack_trace.append(ra)
+        if current_ra and current_ra not in stack_trace:
+            stack_trace.append(current_ra)
 
+        # Perform manual scanning through the stack memory
         while current_sp:
             try:
-                for offset in range(0, 128, 8):  # Adjust the range if needed
-                    potential_return_addr = int.from_bytes(target.memory[current_sp + offset, 8], byteorder="little")
+                # Scan the stack at offsets from the current SP
+                for offset in range(0, 128, 8):
+                    potential_ra = int.from_bytes(target.memory[current_sp + offset, 8], byteorder="little")
 
-                    # Just append any address we find (without validation for now)
-                    stack_trace.append(potential_return_addr)
-                    print(f"Potential return address found at (sp + {offset}): {potential_return_addr:x}")
+                    # Append potential return addresses found in the stack
+                    stack_trace.append(potential_ra)
+                    print(f"Potential return address found at (sp + {offset}): {potential_ra:x}")
 
-                # Move up the stack
+                # Move to the next block of stack memory
                 current_sp += 128  # Adjust step size as needed
 
             except OSError:
-                print("Error reading memory while scanning stack.")
+                print("Error reading memory while scanning the stack.")
                 break
 
+        # Return the complete stack trace
         return stack_trace
