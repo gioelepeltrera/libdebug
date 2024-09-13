@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
 class RiscVStackUnwinding():
     """
     Class that provides stack unwinding for the RISC-V architecture.
@@ -22,7 +21,7 @@ class RiscVStackUnwinding():
 
     def unwind(self, target: "Debugger") -> list:
         """
-        Unwind the stack of a process using both the frame pointer (s0/x8) and the stack pointer (sp/x2).
+        Unwind the stack of a process using both the frame pointer (s0) and the stack pointer (sp).
 
         Args:
             target (Debugger): The target Debugger.
@@ -33,35 +32,35 @@ class RiscVStackUnwinding():
 
         # Start with the current program counter (pc)
         stack_trace = [target.pc]
-        ra = target.ra if target.ra else None  # Use return address if available
+        ra = target.ra if target.ra else None
 
-        # Frame pointer-based unwinding
-        current_fp = target.x8  # Frame pointer (s0)
-        temp_stack_fp = []
+        current_fp = target.x8
+        current_sp = target.sp
 
-        print("\nStack Unwinding via Frame Pointer (s0/x8):")
+        temp_stack = []
 
-        # Keep unwinding until we reach the end or invalid frame
+        # Print registers for debugging
+        print(f"PC: {target.pc:x}")
+        print(f"FP (s0/x8): {current_fp:x}")
+        print(f"SP: {current_sp:x}")
+        print(f"RA: {ra:x}")
+
+        # Unwind using frame pointer (s0, x8)
         while current_fp:
             try:
-                # Print debugging information about current frame pointer
                 print(f"Current FP: {current_fp:x}")
 
-                # Read the return address from the stack frame (fp + 8 contains ra)
+                # Attempt to read the return address from the current frame
                 return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
-                print(f"Return Address: {return_address:x}")
-
-                # Append the return address to the temporary stack
-                temp_stack_fp.append(return_address)
-
-                # Read the next frame pointer (fp contains the previous frame's fp)
                 next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
-                print(f"Next FP: {next_fp:x}")
 
-                # Print additional stack values (optional, for debugging)
+                # Add the return address to the temporary stack
+                temp_stack.append(return_address)
+
+                # Print more values for debugging
                 for offset in range(16, 64, 8):
-                    value_at_offset = int.from_bytes(target.memory[current_fp + offset, 8], byteorder="little")
-                    print(f"Value at (fp + {offset}): {value_at_offset:x}")
+                    value_at_fp = int.from_bytes(target.memory[current_fp + offset, 8], byteorder="little")
+                    print(f"Value at (fp + {offset}): {value_at_fp:x}")
 
                 # Move to the next frame
                 current_fp = next_fp
@@ -70,11 +69,37 @@ class RiscVStackUnwinding():
                 print("Error reading memory while unwinding stack.")
                 break
 
-        # Add the return address from the link register (ra) if not already in the stack trace
-        if ra not in temp_stack_fp:
-            stack_trace += [ra] + temp_stack_fp
-        else:
-            stack_trace += temp_stack_fp
+        # Manual scanning of the stack if unwinding via frame pointer fails
+        print("\nManual stack scanning for return addresses:")
+        if ra and ra not in temp_stack:
+            stack_trace.append(ra)
 
-        # Return the full stack trace
+        while current_sp:
+            try:
+                for offset in range(0, 128, 8):  # Adjust the range if needed
+                    potential_return_addr = int.from_bytes(target.memory[current_sp + offset, 8], byteorder="little")
+                    if self.is_valid_return_address(potential_return_addr, target):
+                        stack_trace.append(potential_return_addr)
+                        print(f"Potential return address found at (sp + {offset}): {potential_return_addr:x}")
+
+                # Move up the stack
+                current_sp += 128  # Adjust step size as needed
+
+            except OSError:
+                print("Error reading memory while scanning stack.")
+                break
+
         return stack_trace
+
+    def is_valid_return_address(self, address, target):
+        """
+        Check if the address is within the known function code section.
+        Args:
+            address (int): The address to validate.
+            target (Debugger): The target debugger instance.
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        # Placeholder for a real check, e.g., checking against known function boundaries
+        # For example, we could verify that the address lies within the text/code section
+        return address in target.valid_function_addresses
