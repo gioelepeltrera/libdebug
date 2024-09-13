@@ -38,10 +38,6 @@ class RiscVStackUnwinding:
         ra = target.x1  # ra is the return address register in RISC-V 64
         temp_stack = []
 
-        # If the return address is valid, add it to the trace
-        if ra and ra != 0:
-            temp_stack.append(ra)
-
         # Unwind the stack using the frame pointer
         while current_fp:
             try:
@@ -52,14 +48,15 @@ class RiscVStackUnwinding:
                 temp_stack.append(return_address)
 
                 # Read the previous frame pointer (s0, located at current_fp)
-                current_fp = int.from_bytes(target.memory[current_fp-16, 8], byteorder="little")
-                print("CUR_ FP: ",hex(current_fp))
-                
+                current_fp = int.from_bytes(target.memory[current_fp-16, 8], byteorder="little")                
             except OSError:
                 # Stop unwinding if there is an error while reading memory
                 break
 
         # Combine the current stack trace and the unwound addresses
-        stack_trace += temp_stack
+        if ra in temp_stack:
+            stack_trace  = stack_trace + temp_stack
+        else:
+            stack_trace = stack_trace + [ra] + temp_stack
 
         return stack_trace
