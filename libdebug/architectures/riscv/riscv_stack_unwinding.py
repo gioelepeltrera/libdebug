@@ -53,7 +53,8 @@ class RiscVStackUnwinding:
 
                 # Read the previous frame pointer (s0, located at current_fp)
                 current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
-
+                print("CUR_ FP: ",hex(current_fp))
+                
             except OSError:
                 # Stop unwinding if there is an error while reading memory
                 break
