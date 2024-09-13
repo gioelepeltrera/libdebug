@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-class RiscVStackUnwinding:
+
+class RiscVStackUnwinding():
     """
-    Class that provides stack unwinding for the RISC-V 64-bit architecture.
+    Class that provides stack unwinding for the RISC-V architecture.
     """
 
     def unwind(self, target: "Debugger") -> list:
         """
-        Unwind the stack of a process on RISC-V 64 architecture.
+        Unwind the stack of a process using both the frame pointer (s0/x8) and the stack pointer (sp/x2).
 
         Args:
             target (Debugger): The target Debugger.
@@ -30,40 +31,50 @@ class RiscVStackUnwinding:
             list: A list of return addresses (stack trace).
         """
 
-        # Start with the current Program Counter (PC), add it to the stack trace
-        stack_trace = [target.pc]  # PC is the current instruction pointer
+        # Start with the current program counter (pc)
+        stack_trace = [target.pc]
+        ra = target.ra if target.ra else None  # Use return address if available
 
-        # Use the frame pointer (s0, x8) and return address (ra, x1)
-        current_fp = target.x8  # s0 is the frame pointer in RISC-V 64
-        ra = target.x1  # ra is the return address register in RISC-V 64
-        temp_stack = []
+        # Frame pointer-based unwinding
+        current_fp = target.x8  # Frame pointer (s0)
+        temp_stack_fp = []
 
-        # If the return address is valid, add it to the trace
-        if ra and ra != 0:
-            temp_stack.append(ra)
+        print("\nStack Unwinding via Frame Pointer (s0/x8):")
 
-        # Unwind the stack using the frame pointer
+        # Keep unwinding until we reach the end or invalid frame
         while current_fp:
             try:
-                # Read the return address from the stack (located at current_fp + 8)
+                # Print debugging information about current frame pointer
+                print(f"Current FP: {current_fp:x}")
+
+                # Read the return address from the stack frame (fp + 8 contains ra)
                 return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+                print(f"Return Address: {return_address:x}")
 
-                # Append the return address to the temporary stack trace
-                temp_stack.append(return_address)
-                
-                # Print the next 5 values on the stack (following the return address)
-                for i in range(5):
-                    stack_value = int.from_bytes(target.memory[current_fp + 16 + (i * 8), 8], byteorder="little")
-                    print(f"Value at (fp + {16 + i * 8}): 0x{stack_value:x}")
+                # Append the return address to the temporary stack
+                temp_stack_fp.append(return_address)
 
-                # Read the previous frame pointer (s0, located at current_fp)
-                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                # Read the next frame pointer (fp contains the previous frame's fp)
+                next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                print(f"Next FP: {next_fp:x}")
+
+                # Print additional stack values (optional, for debugging)
+                for offset in range(16, 64, 8):
+                    value_at_offset = int.from_bytes(target.memory[current_fp + offset, 8], byteorder="little")
+                    print(f"Value at (fp + {offset}): {value_at_offset:x}")
+
+                # Move to the next frame
+                current_fp = next_fp
 
             except OSError:
-                # Stop unwinding if there is an error while reading memory
+                print("Error reading memory while unwinding stack.")
                 break
 
-        # Combine the current stack trace and the unwound addresses
-        stack_trace += temp_stack
+        # Add the return address from the link register (ra) if not already in the stack trace
+        if ra not in temp_stack_fp:
+            stack_trace += [ra] + temp_stack_fp
+        else:
+            stack_trace += temp_stack_fp
 
+        # Return the full stack trace
         return stack_trace
