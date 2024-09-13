@@ -50,6 +50,11 @@ class RiscVStackUnwinding:
 
                 # Append the return address to the temporary stack trace
                 temp_stack.append(return_address)
+                
+                # Print the next 5 values on the stack (following the return address)
+                for i in range(5):
+                    stack_value = int.from_bytes(target.memory[current_fp + 16 + (i * 8), 8], byteorder="little")
+                    print(f"Value at (fp + {16 + i * 8}): 0x{stack_value:x}")
 
                 # Read the previous frame pointer (s0, located at current_fp)
                 current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
