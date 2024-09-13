@@ -14,8 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
-class RiscVStackUnwinding():
+class RiscVStackUnwinding:
     """
     Class that provides stack unwinding for the RISC-V architecture.
     """
@@ -39,11 +38,11 @@ class RiscVStackUnwinding():
         ra = target.ra if target.ra else None
 
         # Frame pointer (s0, x8) based unwinding
-        current_fp = target.x8
+        current_fp = target.s0  # Corrected register: x8 is the frame pointer (s0)
         temp_stack_fp = []
         
         # Stack pointer (sp, x2) based unwinding
-        current_sp = target.x27
+        current_sp = target.sp  # Corrected register: x2 is the stack pointer (sp)
         temp_stack_sp = []
 
         # Print registers for debugging
@@ -109,5 +108,5 @@ class RiscVStackUnwinding():
         print("\nStack trace using stack pointer (sp, x2):")
         print(stack_trace_sp)
 
-        # Return the stack trace using frame pointer (you can modify this as needed)
-        return stack_trace_fp
+        # Return both stack traces for better testing
+        return stack_trace_fp, stack_trace_sp
