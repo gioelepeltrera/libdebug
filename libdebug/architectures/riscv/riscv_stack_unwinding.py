@@ -46,15 +46,15 @@ class RiscVStackUnwinding:
         while current_fp:
             try:
                 # Read the return address from the stack (located at current_fp + 8)
-                return_address = int.from_bytes(target.memory[current_fp + 16, 8], byteorder="little")
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
                 # Append the return address to the temporary stack trace
                 temp_stack.append(return_address)
 
                 # Read the previous frame pointer (s0, located at current_fp)
-                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                current_fp = int.from_bytes(target.memory[current_fp+16, 8], byteorder="little")
                 print("CUR_ FP: ",hex(current_fp))
-
+                
             except OSError:
                 # Stop unwinding if there is an error while reading memory
                 break
