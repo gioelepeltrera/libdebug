@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-
 class RiscVStackUnwinding:
     """
-    Class that provides stack unwinding for the RISC-V architecture.
+    Class that provides stack unwinding for the RISC-V 64-bit architecture.
     """
 
     def unwind(self, target: "Debugger") -> list:
         """
-        Unwind the stack of a process using both the frame pointer (s0) and the stack pointer (sp).
+        Unwind the stack of a process on RISC-V 64 architecture.
 
         Args:
             target (Debugger): The target Debugger.
@@ -31,54 +30,35 @@ class RiscVStackUnwinding:
             list: A list of return addresses (stack trace).
         """
 
-        # Initialize stack trace with the current program counter (PC)
-        stack_trace = [target.pc]
-        current_ra = target.ra if target.ra else None
-        current_fp = target.x8  # Frame pointer (s0/x8)
-        current_sp = target.sp  # Stack pointer (sp)
+        # Start with the current Program Counter (PC), add it to the stack trace
+        stack_trace = [target.pc]  # PC is the current instruction pointer
 
-        print(f"Starting unwinding:\nPC: {target.pc:x}, FP (s0/x8): {current_fp:x}, SP: {current_sp:x}, RA: {current_ra:x}")
+        # Use the frame pointer (s0, x8) and return address (ra, x1)
+        current_fp = target.x8  # s0 is the frame pointer in RISC-V 64
+        ra = target.x1  # ra is the return address register in RISC-V 64
+        temp_stack = []
 
-        # Attempt stack unwinding using the frame pointer (s0/x8)
+        # If the return address is valid, add it to the trace
+        if ra and ra != 0:
+            temp_stack.append(ra)
+
+        # Unwind the stack using the frame pointer
         while current_fp:
             try:
-                # Read the return address from the current frame (FP + 8)
-                ra = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
-                next_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
+                # Read the return address from the stack (located at current_fp + 8)
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
-                # Append return address to stack trace
-                stack_trace.append(ra)
-                print(f"Unwound function: RA={ra:x}, FP={current_fp:x}, Next FP={next_fp:x}")
+                # Append the return address to the temporary stack trace
+                temp_stack.append(return_address)
 
-                # Move to the next frame
-                current_fp = next_fp
+                # Read the previous frame pointer (s0, located at current_fp)
+                current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
             except OSError:
-                print("Error reading memory at FP; manual stack scanning will be attempted.")
+                # Stop unwinding if there is an error while reading memory
                 break
 
-        # If frame-pointer-based unwinding failed, manually scan the stack for return addresses
-        print("\nManual stack scanning for return addresses:")
-        if current_ra and current_ra not in stack_trace:
-            stack_trace.append(current_ra)
+        # Combine the current stack trace and the unwound addresses
+        stack_trace += temp_stack
 
-        # Perform manual scanning through the stack memory
-        while current_sp:
-            try:
-                # Scan the stack at offsets from the current SP
-                for offset in range(0, 128, 8):
-                    potential_ra = int.from_bytes(target.memory[current_sp + offset, 8], byteorder="little")
-
-                    # Append potential return addresses found in the stack
-                    stack_trace.append(potential_ra)
-                    print(f"Potential return address found at (sp + {offset}): {potential_ra:x}")
-
-                # Move to the next block of stack memory
-                current_sp += 128  # Adjust step size as needed
-
-            except OSError:
-                print("Error reading memory while scanning the stack.")
-                break
-
-        # Return the complete stack trace
         return stack_trace
