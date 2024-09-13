@@ -16,12 +16,12 @@
 #
 class RiscVStackUnwinding:
     """
-    Class that provides stack unwinding for the RISC-V architecture.
+    Class that provides stack unwinding for the RISC-V 64-bit architecture.
     """
 
     def unwind(self, target: "Debugger") -> list:
         """
-        Unwind the stack of a process using both the frame pointer (s0) and the stack pointer (sp).
+        Unwind the stack of a process on RISC-V 64 architecture.
 
         Args:
             target (Debugger): The target Debugger.
@@ -30,83 +30,35 @@ class RiscVStackUnwinding:
             list: A list of return addresses (stack trace).
         """
 
-        # Start with the current program counter (pc)
-        stack_trace_fp = [target.pc]
-        stack_trace_sp = [target.pc]
+        # Start with the current Program Counter (PC), add it to the stack trace
+        stack_trace = [target.pc]  # PC is the current instruction pointer
 
-        # Add the return address from the ra (x1) register
-        ra = target.ra if target.ra else None
+        # Use the frame pointer (s0, x8) and return address (ra, x1)
+        current_fp = target.x8  # s0 is the frame pointer in RISC-V 64
+        ra = target.x1  # ra is the return address register in RISC-V 64
+        temp_stack = []
 
-        # Frame pointer (s0, x8) based unwinding
-        current_fp = target.s0  # Corrected register: x8 is the frame pointer (s0)
-        temp_stack_fp = []
-        
-        # Stack pointer (sp, x2) based unwinding
-        current_sp = target.sp  # Corrected register: x2 is the stack pointer (sp)
-        temp_stack_sp = []
+        # If the return address is valid, add it to the trace
+        if ra and ra != 0:
+            temp_stack.append(ra)
 
-        # Print registers for debugging
-        print("Registers: ")
-        for i in range(32):
-            print(f"x{i}: {getattr(target, f'x{i}'):x}")
-        print(f"pc: {target.pc:x}")
-        print(f"ra: {ra:x}")
-
-        # Unwind using frame pointer (s0, x8)
-        print("\nUnwinding using frame pointer (s0, x8):")
+        # Unwind the stack using the frame pointer
         while current_fp:
             try:
-                print(f"Frame pointer (s0) at: {current_fp:x}")
-                
-                # Read the return address from the stack frame
-                return_address_fp = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
+                # Read the return address from the stack (located at current_fp + 8)
+                return_address = int.from_bytes(target.memory[current_fp + 8, 8], byteorder="little")
 
-                # Append the return address to the temporary stack
-                temp_stack_fp.append(return_address_fp)
+                # Append the return address to the temporary stack trace
+                temp_stack.append(return_address)
 
-                # Move to the next frame pointer
+                # Read the previous frame pointer (s0, located at current_fp)
                 current_fp = int.from_bytes(target.memory[current_fp, 8], byteorder="little")
 
             except OSError:
-                print("Error reading memory using frame pointer (s0).")
+                # Stop unwinding if there is an error while reading memory
                 break
 
-        # Unwind using stack pointer (sp, x2)
-        print("\nUnwinding using stack pointer (sp, x2):")
-        while current_sp:
-            try:
-                print(f"Stack pointer (sp) at: {current_sp:x}")
+        # Combine the current stack trace and the unwound addresses
+        stack_trace += temp_stack
 
-                # Read the return address from the stack
-                return_address_sp = int.from_bytes(target.memory[current_sp, 8], byteorder="little")
-
-                # Append the return address to the temporary stack
-                temp_stack_sp.append(return_address_sp)
-
-                # Move to the next stack pointer
-                current_sp = int.from_bytes(target.memory[current_sp + 8, 8], byteorder="little")
-
-            except OSError:
-                print("Error reading memory using stack pointer (sp).")
-                break
-
-        # Include the return address from the `ra` register if it's not in the stack trace
-        if ra not in temp_stack_fp:
-            stack_trace_fp = stack_trace_fp + [ra] + temp_stack_fp
-        else:
-            stack_trace_fp = stack_trace_fp + temp_stack_fp
-
-        if ra not in temp_stack_sp:
-            stack_trace_sp = stack_trace_sp + [ra] + temp_stack_sp
-        else:
-            stack_trace_sp = stack_trace_sp + temp_stack_sp
-
-        # Print both stack traces before returning
-        print("\nStack trace using frame pointer (s0, x8):")
-        print(stack_trace_fp)
-
-        print("\nStack trace using stack pointer (sp, x2):")
-        print(stack_trace_sp)
-
-        # Return both stack traces for better testing
-        return stack_trace_fp, stack_trace_sp
+        return stack_trace
